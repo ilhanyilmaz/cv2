@@ -1,3 +1,17 @@
+########################################
+# written by ilhanyilmaz
+# crops and resizes the given video
+# according to provided arguments
+# input:
+#   -i :  input video
+#   -o :  output video
+#   -w :  target width
+#   -h :  target height
+#   -s :  crop starts from given input
+#   -e :  crop ends from given input
+########################################
+
+
 import numpy as np
 import cv2
 import cv2.cv as cv
