@@ -30,14 +30,14 @@ def editVideo():
     #fourcc = cap.get(cv.CV_CAP_PROP_FOURCC)
     fourcc = cv.CV_FOURCC('X','V','I','D')
 
-    videoWriter = cv2.VideoWriter(outputfile, int(fourcc), fps, (targetHeight,targetWidth))
+    videoWriter = cv2.VideoWriter(outputfile, int(fourcc), fps, (targetWidth,targetHeight))
 
     for frameCount in range(frameInRange):
         #print ("{}/{}".format(frameCount, totalFrames), end='\r')
         perc= int(frameCount * 10.0 / frameInRange)
         sys.stdout.write("\r{0}> {1}/{2} completed...".format("="*perc, frameCount, frameInRange))
         ret, frame = cap.read()
-        smallFrame = cv2.resize(frame, (targetHeight,targetWidth))    
+        smallFrame = cv2.resize(frame, (targetWidth,targetHeight))    
 
         videoWriter.write(smallFrame)
 
@@ -48,6 +48,7 @@ def editVideo():
 
     cap.release()
     cv2.destroyAllWindows()
+    print "\nEditing completed. File saved at {}.".format(outputfile)
 
 def main(argv):
     global inputfile
@@ -99,8 +100,14 @@ def main(argv):
     totalFrames = int(cap.get(cv.CV_CAP_PROP_FRAME_COUNT))
 
     anyChange = False
+    if not startAt == 0:
+        startAt = int(startAt * fps) # turn seconds into frames
+
     if endAt == 0:
-        endAt = totalFrames
+        endAt = totalFrames  # set end frame if not provided
+    else :
+        endAt = int(endAt * fps) # turn seconds into frames
+
 
     if targetWidth == 0:
         targetWidth = orgWidth
