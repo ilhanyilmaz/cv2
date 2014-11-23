@@ -7,6 +7,7 @@
 #   -w :  target width
 #   -h :  target height
 #   -t :  record length
+#   -f :  fps
 ########################################
 
 
@@ -15,7 +16,11 @@ import cv2
 import cv2.cv as cv
 import sys, getopt
 import time
+import threading
 
+DEBUG = True
+
+interrupt = False
 outputfile = ''
 targetWidth = int(0)
 targetHeight = int(0)
@@ -24,7 +29,7 @@ fps = 0
 cap = None
 sleepTime = 0
 
-def recordVideo():
+def recordVideo( ):
     global outputfile
     global targetWidth
     global targetHeight
@@ -39,8 +44,11 @@ def recordVideo():
     videoWriter = cv2.VideoWriter(outputfile, int(fourcc), fps, (targetHeight,targetWidth))
 
     for frameCount in range(recordTime):
+        if interrupt :
+            break
         #print ("{}/{}".format(frameCount, totalFrames), end='\r')
-        sys.stdout.write("\r {0}/{1} recorded...".format(frameCount/fps, recordTime / fps))
+        if DEBUG :
+            sys.stdout.write("\r {0}/{1} recorded...".format(frameCount/fps, recordTime / fps))
         ret, frame = cap.read()
         smallFrame = cv2.resize(frame, (targetHeight,targetWidth))    
 
@@ -64,11 +72,14 @@ def main(argv):
     global cap
     global fps
     global sleepTime
+    global interrupt
+
+    t = None
 
     try:
         opts, args = getopt.getopt(argv, "o:w:h:t:f:", ["ofile=","width=", "height=", "length=", "recordfps="])
     except getopt.GetoptError:
-        print 'resizeVideo.py -o <outputfile> -w <width> -h <height> -t <recordlength>'
+        print 'resizeVideo.py -o <outputfile> -w <width> -h <height> -t <recordlength> -f <fps>'
         sys.exit(2)
     
     for opt, arg in opts:
@@ -88,7 +99,6 @@ def main(argv):
             
 
     if outputfile == '':
-        #print 'resizeVideo.py -o <outputfile> -w <width> -h <height> -t <recordlength>'
         outputfile = "record{}.avi".format(time.clock())
         print outputfile
 
@@ -118,7 +128,18 @@ def main(argv):
     print "Target size is: {}-{}".format(targetWidth,targetHeight)
     print "Record length : {}".format(recordTime / fps)
 
-    recordVideo()    
+    try:
+        t=threading.Thread(target=recordVideo)
+        #t.setDaemon(True)
+        t.start()
+    except:
+        print "Error: unable to start thread"
+
+    var = raw_input("Press any key to stop...")
+    print var
+    interrupt = True
+    time.sleep(1)
+    #t.join()
 
 if __name__ == "__main__":
     main(sys.argv[1:])
