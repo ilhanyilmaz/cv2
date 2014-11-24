@@ -44,6 +44,7 @@ while(capture.isOpened and anyChange and count < 20):
                 if checkMat[i][j] < 5:
                     if threshold[i][j]==1:
                         checkMat[i][j] += 1
+                        backImage[i][j] = (backImage[i][j]*(checkMat[i][j]-1) + imgGray[i][j]) / checkMat[i][j]
                     else:
                         checkMat[i][j] = 0
                         backImage[i][j] = imgGray[i][j]

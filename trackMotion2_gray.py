@@ -17,11 +17,11 @@ backImage = cv2.imread("backgroundImageGray.jpg", cv2.COLOR_BGR2GRAY)
 
 while(capture.isOpened): 
     f,img=capture.read()
-    imgGray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     if f==True:
+        imgGray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         diffImage = cv2.absdiff(backImage,imgGray)
-        ret, threshold = cv2.threshold(diffImage, 30, 255, cv2.THRESH_BINARY)
+        ret, threshold = cv2.threshold(diffImage, 20, 255, cv2.THRESH_BINARY)
 
         cv2.imshow('track', threshold)
 
