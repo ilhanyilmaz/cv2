@@ -2,8 +2,13 @@ import cv2
 import numpy as np
 import sys
 
+FRAMEDIST = 5
+THRESHOLD = 20
+PERFECTION = 10
+
 capture = None
 inputFile = None
+
 
 if len(sys.argv) > 1 :
     inputFile = sys.argv[1]
@@ -18,10 +23,10 @@ checkMat = None
 anyChange = True
 img = None
 count = 0
-while(capture.isOpened and anyChange and count < 20): 
+while(capture.isOpened and anyChange and count < 50): 
     count+=1
     f = False
-    for i in range(30):
+    for i in range(FRAMEDIST):
         f,img=capture.read()
 
     imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -30,7 +35,7 @@ while(capture.isOpened and anyChange and count < 20):
             backImage = imgGray
             continue
         diffImage = cv2.absdiff(backImage,imgGray)
-        ret, threshold = cv2.threshold(diffImage, 30, 1, cv2.THRESH_BINARY_INV)
+        ret, threshold = cv2.threshold(diffImage, THRESHOLD, 1, cv2.THRESH_BINARY_INV)
         
         if checkMat == None:
             checkMat = threshold.copy()
@@ -38,10 +43,11 @@ while(capture.isOpened and anyChange and count < 20):
 
         #bitwiseMat = cv2.bitwise_and(checkMat, threshold)
 
+        #cv2.accumulate(threshold, checkMat)
         anyChange = False
         for j in range(640):
             for i in range(480):
-                if checkMat[i][j] < 5:
+                if checkMat[i][j] < PERFECTION: 
                     if threshold[i][j]==1:
                         checkMat[i][j] += 1
                         backImage[i][j] = (backImage[i][j]*(checkMat[i][j]-1) + imgGray[i][j]) / checkMat[i][j]
