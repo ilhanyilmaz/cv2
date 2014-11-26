@@ -35,7 +35,16 @@ while(capture.isOpened):
         #kernel = np.ones((8,8),np.uint8)
         #threshold = cv2.erode(threshold,kernel,iterations = 1)
         contours, hierachy = cv2.findContours(threshold, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(img,contours,-1,(0,255,0),3)
+        
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            #print area
+            if area < 10:
+                continue
+            x,y,w,h = cv2.boundingRect(contour)
+            #print "{0}-{1}/{2}-{3}".format(x,y,w,h)
+            cv2.rectangle(img, (x,y), (x+w,y+h), (0,255,0))
+        #cv2.drawContours(img,contours,-1,(0,255,0),3)
 
         cv2.imshow('track', img)
 
