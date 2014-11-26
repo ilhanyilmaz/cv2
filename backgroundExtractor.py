@@ -2,66 +2,48 @@ import cv2
 import numpy as np
 import sys
 
-capture = None
-inputFile = None
 
-if len(sys.argv) > 1 :
-    inputFile = sys.argv[1]
-    print "Opening file: {}".format(inputFile)
-    capture=cv2.VideoCapture(inputFile)
-else :
-    print "Opening camera."
-    capture=cv2.VideoCapture(0)
+class BackgroundExtractor():
+    """Extracts the background image, given consecutive images."""
 
-backImage = None
-checkMat = None
-anyChange = True
-img = None
-count = 0
-while(capture.isOpened and anyChange and count < 20): 
-    count+=1
-    f = False
-    for i in range(30):
-        f,img=capture.read()
+    def __init__(self):
+        self.FRAMEDIST = 5
+        self.THRESHOLD = 20
+        self.PERFECTION = 10
 
-    if f==True:
-        if backImage == None:
-            backImage = img
-            continue
-        diffImage = cv2.absdiff(backImage,img)
-        ret, thresholdRGB = cv2.threshold(diffImage, 30, 1, cv2.THRESH_BINARY_INV)
-        threshold = cv2.cvtColor(thresholdRGB, cv2.COLOR_BGR2GRAY)
+        self.backImage = None
+        self.checkMat = None
+        self.height = 0
+        self.width = 0
+
+    def feed(self, image):
+        if self.backImage == None:
+            self.backImage = image.copy()
+            self.height, self.width = image.shape[:2]
+            return
+
+        diffImage = cv2.absdiff(self.backImage,image)
+        ret, threshold = cv2.threshold(diffImage, self.THRESHOLD, 1, cv2.THRESH_BINARY_INV)
         
-        if checkMat == None:
-            checkMat = threshold.copy()
-            continue
+        if self.checkMat == None:
+            self.checkMat = threshold.copy()
+            return
 
-        #bitwiseMat = cv2.bitwise_and(checkMat, threshold)
+        self.checkMat = cv2.multiply(self.checkMat, threshold)
+        self.checkMat = cv2.add(threshold,self.checkMat)
+        ret, newFinalizedPoints = cv2.threshold(self.checkMat, self.PERFECTION, 255, cv2.THRESH_BINARY)
+        newBackImagePoints = cv2.bitwise_and(image,image,mask = newFinalizedPoints)
+        self.backImage = cv2.bitwise_or(newBackImagePoints, self.backImage)
 
-        anyChange = False
-        for j in range(640):
-            for i in range(480):
-                if checkMat[i][j] < 5:
-                    if threshold[i][j]==1:
-                        checkMat[i][j] += 1
-                    else:
-                        checkMat[i][j] = 0
-                        backImage[i][j] = img[i][j]
-                        anyChange = True                
+    def extract(self, capture, frameCount):
+        count = 0
+        while(capture.isOpened and count < frameCount): 
+            count+=1
+            for i in range(self.FRAMEDIST):
+                f,img=capture.read()
 
-        #checkMat = checkMat * bitwiseMat + checkMat
-        #r, threshCheckMat = cv2.threshold(checkMat, 1,255,cv2.THRESH_BINARY)
+            imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            if f==True:
+                self.feed(imgGray)
 
-        #backImage = cv2.bitwise_and(backImage,backImage,mask=threshCheckMat)
-        cv2.imshow('track', backImage)
-        if anyChange == False:
-            break
-
-    if(cv2.waitKey(27)!=-1):
-        capture.release()
-        cv2.destroyAllWindows()
-        break 
-
-capture.release()
-cv2.destroyAllWindows()
-cv2.imwrite("backgroundImage.jpg", backImage)
+        return self.backImage
