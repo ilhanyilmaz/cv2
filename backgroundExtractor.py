@@ -7,38 +7,59 @@ class BackgroundExtractor():
     """Extracts the background image, given consecutive images."""
 
     def __init__(self):
-        self.FRAMEDIST = 5
+        self.FRAMEDIST = 10
         self.THRESHOLD = 20
         self.PERFECTION = 10
 
         self.backImage = None
         self.checkMat = None
-        self.height = 0
-        self.width = 0
 
     def feed(self, image):
         if self.backImage == None:
             self.backImage = image.copy()
-            self.height, self.width = image.shape[:2]
             return
 
         diffImage = cv2.absdiff(self.backImage,image)
-        ret, threshold = cv2.threshold(diffImage, self.THRESHOLD, 1, cv2.THRESH_BINARY_INV)
-        
+        ret, threshold1 = cv2.threshold(diffImage, self.THRESHOLD, 1, cv2.THRESH_BINARY_INV)
+        ret, threshold255 = cv2.threshold(diffImage, self.THRESHOLD, 255, cv2.THRESH_BINARY_INV)
+
         if self.checkMat == None:
-            self.checkMat = threshold.copy()
+            self.checkMat = threshold1.copy()
             return
 
-        self.checkMat = cv2.multiply(self.checkMat, threshold)
-        self.checkMat = cv2.add(threshold,self.checkMat)
-        ret, newFinalizedPoints = cv2.threshold(self.checkMat, self.PERFECTION, 255, cv2.THRESH_BINARY)
-        newBackImagePoints = cv2.bitwise_and(image,image,mask = newFinalizedPoints)
-        self.backImage = cv2.bitwise_or(newBackImagePoints, self.backImage)
+        #self.checkMat = cv2.multiply(self.checkMat, threshold)
+
+        ret, fixedPoints255 = cv2.threshold(self.checkMat, self.PERFECTION, 255, cv2.THRESH_BINARY)
+        notFixedPoints255 = cv2.bitwise_not(fixedPoints255)
+
+        nonChanged = cv2.bitwise_and(self.checkMat, threshold255)
+        nonChangedPlus1 = cv2.add(threshold1,nonChanged)
+
+        ret, newFixedPoints255 = cv2.threshold(nonChangedPlus1, self.PERFECTION, 255, cv2.THRESH_BINARY)
+        totalFixedPoints255 = cv2.bitwise_or(fixedPoints255, newFixedPoints255)
+        totalNonFixedPoints255 = cv2.bitwise_not(totalFixedPoints255)
+
+        tempMat = cv2.bitwise_or(nonChangedPlus1, totalFixedPoints255)
+        ret, oldImageMask = cv2.threshold(tempMat, 1, 255, cv2.THRESH_BINARY)
+        newImageMask = cv2.bitwise_not(oldImageMask)
+
+        newBackImagePoints = cv2.bitwise_and(image,image,mask = newImageMask)
+        oldBackImagePoints = cv2.bitwise_and(self.backImage, self.backImage, mask = oldImageMask)
+        self.backImage = cv2.add(newBackImagePoints, oldBackImagePoints)
+
+        self.checkMat = cv2.bitwise_or(nonChangedPlus1, totalFixedPoints255)
+
+        cv2.imshow("newFinalPoints", self.backImage)
+        if(cv2.waitKey()!=-1):
+            cv2.destroyAllWindows()        
+
+
 
     def extract(self, capture, frameCount):
         count = 0
         while(capture.isOpened and count < frameCount): 
             count+=1
+            i=0
             for i in range(self.FRAMEDIST):
                 f,img=capture.read()
 
