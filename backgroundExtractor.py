@@ -6,10 +6,10 @@ import sys
 class BackgroundExtractor():
     """Extracts the background image, given consecutive images."""
 
-    def __init__(self):
+    def __init__(self, perfection):
         self.FRAMEDIST = 1
         self.THRESHOLD = 10
-        self.PERFECTION = 50
+        self.PERFECTION = perfection
 
         self.backImage = None
         self.checkMat = None
@@ -20,6 +20,7 @@ class BackgroundExtractor():
             return
 
         diffImage = cv2.absdiff(self.backImage,image)
+
         ret, threshold1 = cv2.threshold(diffImage, self.THRESHOLD, 1, cv2.THRESH_BINARY_INV)
         ret, threshold255 = cv2.threshold(diffImage, self.THRESHOLD, 255, cv2.THRESH_BINARY_INV)
 

@@ -15,11 +15,11 @@ else :
     print "Opening camera."
     capture=cv2.VideoCapture(0)
 
-backExtr = be.BackgroundExtractor()
+backExtr = be.BackgroundExtractor(50)
 
 if capture.isOpened :
     print capture
-    backImage =backExtr.extract(capture, 1000)
+    backImage =backExtr.extract(capture, 400)
     cv2.imshow('track', backImage)
 
     if(cv2.waitKey()!=-1):
