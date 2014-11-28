@@ -19,7 +19,7 @@ backExtr = be.BackgroundExtractor()
 
 if capture.isOpened :
     print capture
-    backImage =backExtr.extract(capture, 50)
+    backImage =backExtr.extract(capture, 1000)
     cv2.imshow('track', backImage)
 
     if(cv2.waitKey()!=-1):

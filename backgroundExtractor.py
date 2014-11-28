@@ -7,9 +7,9 @@ class BackgroundExtractor():
     """Extracts the background image, given consecutive images."""
 
     def __init__(self):
-        self.FRAMEDIST = 10
-        self.THRESHOLD = 20
-        self.PERFECTION = 10
+        self.FRAMEDIST = 1
+        self.THRESHOLD = 10
+        self.PERFECTION = 50
 
         self.backImage = None
         self.checkMat = None
@@ -50,7 +50,7 @@ class BackgroundExtractor():
         self.checkMat = cv2.bitwise_or(nonChangedPlus1, totalFixedPoints255)
 
         cv2.imshow("newFinalPoints", self.backImage)
-        if(cv2.waitKey()!=-1):
+        if(cv2.waitKey(27)!=-1):
             cv2.destroyAllWindows()        
 
 
