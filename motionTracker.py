@@ -6,7 +6,7 @@ import sys
 class MotionTracker():
 
     def __init__(self, backImage):
-        self.THRESHOLD = 20
+        self.THRESHOLD = 10
         self.backImage = backImage
         self.KERNEL_OPEN = np.ones((2,2),np.uint8)
         self.KERNEL_CLOSE = np.ones((10,10),np.uint8)

@@ -10,13 +10,17 @@ class BackgroundExtractor():
         self.FRAMEDIST = 1
         self.THRESHOLD = 10
         self.PERFECTION = perfection
-
+        self.PERCENTAGE = 0.995
+        self.minFixedPixel = 1000
         self.backImage = None
         self.checkMat = None
+        self.nonZeroPoints = 1
 
     def feed(self, image):
         if self.backImage == None:
             self.backImage = image.copy()
+            self.minFixedPixel = int(image.size*self.PERCENTAGE)
+            print self.minFixedPixel
             return
 
         diffImage = cv2.absdiff(self.backImage,image)
@@ -49,23 +53,25 @@ class BackgroundExtractor():
         self.backImage = cv2.add(newBackImagePoints, oldBackImagePoints)
 
         self.checkMat = cv2.bitwise_or(nonChangedPlus1, totalFixedPoints255)
-
-        cv2.imshow("newFinalPoints", self.backImage)
-        if(cv2.waitKey(27)!=-1):
-            cv2.destroyAllWindows()        
-
-
-
+        self.nonZeroPoints = cv2.countNonZero(totalFixedPoints255)
+        
     def extract(self, capture, frameCount):
         count = 0
-        while(capture.isOpened and count < frameCount): 
+        while(capture.isOpened and count < frameCount and self.nonZeroPoints < self.minFixedPixel):
+            print self.nonZeroPoints 
             count+=1
             i=0
             for i in range(self.FRAMEDIST):
                 f,img=capture.read()
 
-            imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             if f==True:
+                imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 self.feed(imgGray)
+                cv2.imshow("backImage", self.backImage)
+
+            if(cv2.waitKey(27)!=-1):
+                capture.release()
+                cv2.destroyAllWindows()
+                return None
 
         return self.backImage
