@@ -10,8 +10,7 @@ endY = 0
 image = None
 mouseDown = False
 
-def summarizeHistogram(crop):
-    global image, startX, startY, endX, endY
+def summarizeHistogram(crop, image):
     cv2.imshow('crop', crop)
     height, width, depth = crop.shape
     print str(height) + ', ' + str(width)
@@ -24,7 +23,7 @@ def summarizeHistogram(crop):
     #dst = cv2.calcBackProject([hsvt],[0,1],roiHist,[0,width,0,height],1)
     dst = cv2.calcBackProject([hsvt],[0,1],roiHist,[0,height,0,width],1)
 
-    disc = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+    disc = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(10,10))
     cv2.filter2D(dst, -1,disc,dst)
 
     ret,thresh = cv2.threshold(dst,50,255,cv2.THRESH_BINARY)
@@ -60,7 +59,7 @@ def mouseEvent(event,x,y,flags,param):
         fixPoints()
         cropImg = image[startY:endY, startX:endX]
         mouseDown = False
-        summarizeHistogram(cropImg)
+        summarizeHistogram(cropImg, image)
     elif event == cv2.EVENT_MOUSEMOVE and mouseDown:
         endX = x
         endY = y
