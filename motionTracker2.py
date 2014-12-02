@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
 import sys
+import motionTracker
 
-
-class MotionTracker2():
+class MotionTracker2(motionTracker.MotionTracker):
 
     def __init__(self):
         self.THRESHOLD = 10
