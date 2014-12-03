@@ -5,7 +5,13 @@ import cv2
 import glob
 import sys
 
+KEYSPACE = 32
+KEYLEFT = 65361
+KEYRIGHT = 65363
+KEYESC = 27 
+
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+playing = True
 
 def draw(img, corners, imgpts):
     imgpts = np.int32(imgpts).reshape(-1,2)
@@ -31,9 +37,6 @@ def getCameraCalibration(image, objp):
 
     #height, width, depth = imgorg.shape
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    #gray = cv2.imread(fname,cv2.IMREAD_GRAYSCALE)
-    #cv2.imshow("gray", gray)
-    #height, width = gray.shape
     ret = False
     # Find the chess board corners
     ret, corners = cv2.findChessboardCorners(gray, (7,7), None)
@@ -44,28 +47,40 @@ def getCameraCalibration(image, objp):
     if ret == True:
         objpoints.append(objp)
 
-        corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
+        cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
         imgpoints.append(corners)
 
 
         # Draw and display the corners
         cv2.drawChessboardCorners(image, (7,7), corners,ret)
+
+        #calibration
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
-        ret, tvecs, inliers = cv2.solvePnPRansac(objp, corners2, mtx, dist)
-        imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
-        dst= draw(image,corners2,imgpts)
-        #dst = cv2.undistort(image, mtx, dist)
+
+        
+        #undistort
+        newcameramtx, roi=cv2.getOptimalNewCameraMatrix(mtx,dist,(w,h),1,(w,h))
+        dst = cv2.undistort(image, mtx, dist)
+        
+        print "mtx: {0}\ndist: {1}".format(mtx,dist)
+        return dst
+
+        #ret, tvecs, inliers = cv2.solvePnPRansac(objp, corners2, mtx, dist)
+        #imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
+        #dst= draw(image,corners2,imgpts)
         # undistort
-        #newcameramtx, roi=cv2.getOptimalNewCameraMatrix(mtx,dist,(w,h),1,(w,h))
         #mapx,mapy = cv2.initUndistortRectifyMap(mtx,dist,None,newcameramtx,(w,h),5)
         #dst = cv2.remap(image,mapx,mapy,cv2.INTER_LINEAR)
 
-        #print "ret: {0}\nmtx: {0}\ndist: {1}".format(ret,mtx,dist,rvecs,tvecs)
-        #print "ret: {0}\nmtx: {1}\ndist: {2}\nrvecs:{3}\ntvecs:{4}".format(ret,mtx,dist,rvecs,tvecs)
-        return dst
+        #return dst
     return image
 def main(argv):
-    capture = cv2.VideoCapture(0)
+    global playing
+
+    if len(argv) > 0:
+        capture = cv2.VideoCapture(argv[0])
+    else:
+        capture = cv2.VideoCapture(0)
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     objp = np.zeros((7*7,3), np.float32)
     #objp[:,:2] = np.mgrid[0:21.3:3.55,0:21.3:3.55].T.reshape(-1,2)
@@ -75,14 +90,34 @@ def main(argv):
 
 
     while capture.isOpened :
+        currentFrame =  capture.get(cv2.cv.CV_CAP_PROP_POS_FRAMES)
         f,image = capture.read()
         image = getCameraCalibration(image.copy(), objp)
         cv2.imshow("img",image)
 
-        if(cv2.waitKey(27)!=-1):
-            cv2.destroyAllWindows()
-            capture.release()
-            break
+        if playing:
+            key = cv2.waitKey(25) 
+            if(key == KEYSPACE):
+                playing = False
+            elif(key == 27):
+                cv2.destroyAllWindows()
+                capture.release()
+                break
+        else:
+            key = cv2.waitKey(0) 
+            if(key == 27):
+                print key
+                cv2.destroyAllWindows()
+                capture.release()
+                break
+            elif(key == KEYLEFT):
+                playing = False
+                capture.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, currentFrame - 1.0)
+            elif(key == KEYRIGHT):
+                playing = False
+                capture.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, currentFrame + 1.0)
+            elif key == KEYSPACE :
+                playing = True
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
