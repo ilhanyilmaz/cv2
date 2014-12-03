@@ -10,10 +10,6 @@ KEYLEFT = 65361
 KEYRIGHT = 65363
 KEYESC = 27 
 
-mtx = np.float32([[ 631.22109349,0.,298.14876851],[0.,666.24596045,244.10381178],[0.,0.,1.]])
-
-dist= np.float32([[ 0.12338113, -1.04133076, -0.02325425, -0.01084442,  3.48500498]])
-
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 playing = True
 
@@ -33,9 +29,12 @@ def draw(img, corners, imgpts):
     return img
 
 def getCameraCalibration(image, objp):
-    global criteria, mtx, dist
+    global criteria
 
-    axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
+    # Arrays to store object points and image points from all the images.
+    objpoints = [] # 3d point in real world space
+    imgpoints = [] # 2d points in image plane.
+
     #height, width, depth = imgorg.shape
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     ret = False
@@ -46,18 +45,34 @@ def getCameraCalibration(image, objp):
 
     # If found, add object points, image points (after refining them)
     if ret == True:
-        #objpoints.append(objp)
+        objpoints.append(objp)
 
         cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
-        #imgpoints.append(corners)
+        imgpoints.append(corners)
 
-        rvecs,tvecs,inliers = cv2.solvePnPRansac(objp, corners, mtx, dist)
 
-        imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
-        img = draw(image, corners, imgpts)
+        # Draw and display the corners
+        cv2.drawChessboardCorners(image, (7,7), corners,ret)
+
+        #calibration
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
+
         
-        return img
+        #undistort
+        newcameramtx, roi=cv2.getOptimalNewCameraMatrix(mtx,dist,(w,h),1,(w,h))
+        dst = cv2.undistort(image, mtx, dist, None, newcameramtx)
+        
+        print "mtx: {0}\ndist: {1}".format(mtx,dist)
+        return dst
 
+        #ret, tvecs, inliers = cv2.solvePnPRansac(objp, corners2, mtx, dist)
+        #imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
+        #dst= draw(image,corners2,imgpts)
+        # undistort
+        #mapx,mapy = cv2.initUndistortRectifyMap(mtx,dist,None,newcameramtx,(w,h),5)
+        #dst = cv2.remap(image,mapx,mapy,cv2.INTER_LINEAR)
+
+        #return dst
     return image
 def main(argv):
     global playing
