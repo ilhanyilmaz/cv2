@@ -9,9 +9,35 @@ KEYSPACE = 32
 KEYLEFT = 65361
 KEYRIGHT = 65363
 KEYESC = 27 
+KEY_S = 115
 
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 playing = True
+
+lastMtx = None
+lastDist = None
+lastTVec = None
+lastRVec = None
+SAVEDIRECTORY = './sample/calibration/'
+
+
+def saveCalibration():
+    global lastMtx, lastDist, lastTVec, lastRVec
+    if not lastMtx==None and not lastDist==None and not lastTVec==None and not lastRVec==None :
+        file = SAVEDIRECTORY + 'calibration.npy'
+        np.savez(file, mtx=lastMtx, dist=lastDist, tvecs=lastTVec, rvecs=lastRVec)
+    #if not lastMtx == None :
+    #    file = SAVEDIRECTORY + 'mtx.npy'
+    #    np.save(file, lastMtx)
+    #if not lastDist == None :
+    #    file = SAVEDIRECTORY + 'dist.npy'
+    #    np.save(file, lastDist)
+    #if not lastTVec == None :
+    #    file = SAVEDIRECTORY + 'tvecs.npy'
+    #    np.save(file, lastTVec)
+    #if not lastRVec == None :
+    #    file = SAVEDIRECTORY + 'rvecs.npy'
+    #    np.save(file, lastRVec)
 
 def draw(img, corners, imgpts):
     imgpts = np.int32(imgpts).reshape(-1,2)
@@ -30,6 +56,7 @@ def draw(img, corners, imgpts):
 
 def getCameraCalibration(image, objp):
     global criteria
+    global lastMtx, lastDist, lastTVec, lastRVec
 
     # Arrays to store object points and image points from all the images.
     objpoints = [] # 3d point in real world space
@@ -63,6 +90,11 @@ def getCameraCalibration(image, objp):
         dst = cv2.undistort(image, mtx, dist, None, newcameramtx)
         
         print "mtx: {0}\ndist: {1}".format(mtx,dist)
+
+        lastMtx = newcameramtx
+        lastDist = dist
+        lastRVec = rvecs
+        lastTVec = tvecs
         return dst
 
         #ret, tvecs, inliers = cv2.solvePnPRansac(objp, corners2, mtx, dist)
@@ -118,6 +150,8 @@ def main(argv):
                 capture.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, currentFrame + 1.0)
             elif key == KEYSPACE :
                 playing = True
+            elif key == KEY_S :
+                saveCalibration()
             else :
                 print key
 
