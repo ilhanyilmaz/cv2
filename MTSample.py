@@ -5,6 +5,7 @@ import sys
 
 import backgroundExtractor as be
 import motionTracker as mt
+import videoPlayer as vp
 
 def updateBackImage(capture, perfection):
     if capture.isOpened :
@@ -18,11 +19,12 @@ def updateBackImage(capture, perfection):
 def main(argv):
     capture = None
     inputFile = None
-
+    player = None
     if len(sys.argv) > 1 :
         inputFile = sys.argv[1]
         print "Opening file: {}".format(inputFile)
         capture=cv2.VideoCapture(inputFile)
+        player = vp.VideoPlayer(capture)
     else :
         print "Opening camera."
         capture=cv2.VideoCapture(0)
@@ -32,11 +34,11 @@ def main(argv):
         backImage = updateBackImage(capture, 50)
         if backImage == None:
             return 0
-        motionTracker = mt.MotionTracker(backImage)
+        motionTracker = mt.MotionTracker(backImage, './sample/calibration/calibration.npz')
 
         while capture.isOpened :
             #print capture.get(cv2.cv.CV_CAP_PROP_)
-            f,frame = capture.read()
+            f,frame = capture.retrieve()
             frameGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             mo = motionTracker.getMovingObjects(frameGray)
             #print len(mo)
@@ -44,15 +46,20 @@ def main(argv):
                 backImage = updateBackImage(capture, 50)
                 if backImage == None:
                     break
-                motionTracker = mt.MotionTracker(backImage)
+                #motionTracker = mt.MotionTracker(backImage)
+                motionTracker = mt.MotionTracker(backImage, './sample/calibration/calibration.npz')
                 continue
+            motionTracker.getObjectPositions()
             frame = motionTracker.drawContours(frame)
 	    cv2.imshow('tracker', frame)
         
-            if(cv2.waitKey(27)!=-1):
-                capture.release()
-                cv2.destroyAllWindows()
-                break
+            player.loop()
+
+
+            #if(cv2.waitKey(27)!=-1):
+            #    capture.release()
+            #    cv2.destroyAllWindows()
+            #    break
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

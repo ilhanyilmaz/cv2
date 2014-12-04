@@ -1,17 +1,19 @@
 import cv2
 import numpy as np
 import sys
-
+import locationEstimator as le
 
 class MotionTracker():
 
-    def __init__(self, backImage):
+    def __init__(self, backImage, calibrationFile = None):
         self.THRESHOLD = 10
         self.backImage = backImage
         self.KERNEL_OPEN = np.ones((2,2),np.uint8)
         self.KERNEL_CLOSE = np.ones((10,10),np.uint8)
         self.contours = None
         self.frame = None
+        if not calibrationFile == None :
+            self.estimator = le.LocationEstimator(calibrationFile)
 
     def getMovingObjects(self, frame):
         #imgGray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -27,7 +29,20 @@ class MotionTracker():
         self.contours, hierachy = cv2.findContours(threshold, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
         return self.contours
 
+    def getObjectPositions(self):
+        i=1
+        for contour in self.contours:
+            area = cv2.contourArea(contour)
+            #print area
+            if area < 10:
+                continue
+            x,y,w,h = cv2.boundingRect(contour)
+            if i==1 :
+                print 'obj{0}= {1}-{2}'.format(i, str(x+w/2), str(y+h))
+            i+=1
+
     def drawContours(self, image):
+        i=1
         for contour in self.contours:
             area = cv2.contourArea(contour)
             #print area
@@ -35,6 +50,8 @@ class MotionTracker():
                 continue
             x,y,w,h = cv2.boundingRect(contour)
             #print "{0}-{1}/{2}-{3}".format(x,y,w,h)
-            cv2.rectangle(image, (x,y), (x+w,y+h), (0,255,0))
-        #cv2.drawContours(img,contours,-1,(0,255,0),3)
+            if i==1 :
+                cv2.rectangle(image, (x,y), (x+w,y+h), (0,255,0))
+            i+=1
+            #cv2.drawContours(img,contours,-1,(0,255,0),3)
         return image
