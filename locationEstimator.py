@@ -17,13 +17,17 @@ class LocationEstimator():
         #print rotYMtx
         rotZMtx = self.rotZMtx(self.calibration['rvecs'][0,2])
         #print rotZMtx
+        tVecs = self.calibration['tvecs'][0]
+        rVecs = np.array([self.calibration['rvecs'][0,0],self.calibration['rvecs'][0,1], self.calibration['rvecs'][0,0]])
         mtx = np.dot(rotZMtx,rotYMtx)
         mtx = np.dot(mtx, rotXMtx)
-        #print mtx
-        mtx = np.concatenate((mtx, self.calibration['tvecs'][0]), axis=1)
+        mtx = np.concatenate((mtx, tVecs), axis=1)
         #print mtx
         self.mtx = np.dot(self.calibration['mtx'], mtx)
         #print self.mtx
+        print "mtx:\n{}".format(mtx)
+        print "tvecs: {}".format(tVecs)
+        print "rvecs: {}".format(rVecs)
 
     def rotXMtx(self,a):
         sina = np.sin(a)
@@ -59,7 +63,7 @@ class LocationEstimator():
         return mtx
 
     def get3dCoordinates(self, u, v):
-        eq = np.array([[self.mtx[0,0], self.mtx[0,1]],[self.mtx[1,0],self.mtx[1,1]]])
+        eq = np.array([[self.mtx[0,0], self.mtx[0,2]],[self.mtx[1,0],self.mtx[1,2]]])
         re = np.array([u-self.mtx[0,3], v-self.mtx[1,3]])
         xyres= np.linalg.solve(eq,re)
         return xyres

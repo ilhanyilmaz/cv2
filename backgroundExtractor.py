@@ -58,7 +58,7 @@ class BackgroundExtractor():
     def extract(self, capture, frameCount):
         count = 0
         while(capture.isOpened and count < frameCount and self.nonZeroPoints < self.minFixedPixel):
-            print self.nonZeroPoints 
+            #print self.nonZeroPoints 
             count+=1
             i=0
             for i in range(self.FRAMEDIST):

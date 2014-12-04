@@ -38,7 +38,8 @@ class MotionTracker():
                 continue
             x,y,w,h = cv2.boundingRect(contour)
             if i==1 :
-                print 'obj{0}= {1}-{2}'.format(i, str(x+w/2), str(y+h))
+                #print 'obj{0}= {1}-{2}'.format(i, str(x+w/2), str(y+h))
+                print self.estimator.get3dCoordinates(x+w/2, y+h)
             i+=1
 
     def drawContours(self, image):
