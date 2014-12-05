@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import cv2
 
 class LocationEstimator():
     def __init__(self, calibrationfile):
@@ -10,60 +11,54 @@ class LocationEstimator():
         #print self.calibration['rvecs']
         #print 'tvecs:'
         #print self.calibration['tvecs']
-        #mtx= np.dot(self.calibration['mtx'], self.calibration['rvecs'])
-        rotXMtx = self.rotXMtx(self.calibration['rvecs'][0,0])
-        #print rotXMtx
-        rotYMtx = self.rotYMtx(self.calibration['rvecs'][0,1])
-        #print rotYMtx
-        rotZMtx = self.rotZMtx(self.calibration['rvecs'][0,2])
-        #print rotZMtx
+        rVecs = self.calibration['rvecs'][0]
+        mtx, jacobian = cv2.Rodrigues(rVecs)
         tVecs = self.calibration['tvecs'][0]
-        rVecs = np.array([self.calibration['rvecs'][0,0],self.calibration['rvecs'][0,1], self.calibration['rvecs'][0,0]])
-        mtx = np.dot(rotZMtx,rotYMtx)
-        mtx = np.dot(mtx, rotXMtx)
         mtx = np.concatenate((mtx, tVecs), axis=1)
-        #print mtx
+        #print "mtx:\n{}".format(self.calibration['mtx'])
         self.mtx = np.dot(self.calibration['mtx'], mtx)
+
+        self.scaleFactor = 1
+        self.offsetX = 0.
+        self.offsetY = 0.
+
+        self.defineRange(640,480,500)
+
         #print self.mtx
-        print "mtx:\n{}".format(mtx)
-        print "tvecs: {}".format(tVecs)
-        print "rvecs: {}".format(rVecs)
+        #print "tvecs: {}".format(tVecs)
+        #print "rvecs: {}".format(rVecs)
+        #print "newMtx:\n{}".format(self.calibration['newMtx'])
+        #print "result:\n{}".format(mtx)
 
-    def rotXMtx(self,a):
-        sina = np.sin(a)
-        cosa = np.cos(a)
-        mtx = np.zeros(9).reshape(3,3)
-        mtx[0,0] = 1
-        mtx[1,1] = cosa[0]
-        mtx[1,2] = -sina[0]
-        mtx[2,1] = sina[0]
-        mtx[2,2] = cosa[0]
-        return mtx
-
-    def rotYMtx(self,a):
-        sina = np.sin(a)
-        cosa = np.cos(a)
-        mtx = np.zeros(9).reshape(3,3)
-        mtx[0,0] = cosa[0]
-        mtx[0,2] = sina[0]
-        mtx[1,1] = 1
-        mtx[2,0] = -sina[0]
-        mtx[2,2] = cosa[0]
-        return mtx
-
-    def rotZMtx(self,a):
-        sina = np.sin(a)
-        cosa = np.cos(a)
-        mtx = np.zeros(9).reshape(3,3)
-        mtx[0,0] = cosa
-        mtx[0,1] = -sina[0]
-        mtx[1,0] = sina[0]
-        mtx[1,1] = cosa[0]
-        mtx[2,2] = 1
-        return mtx
-
+    def defineRange(self,w,h,range):
+        imageCorners = np.array([[0,0],[w,0],[0,h],[w,h]])
+        minX=999999
+        minY=999999
+        maxX=-999999
+        maxY=-999999
+        for pt in imageCorners:
+            xyres = self.get3dCoordinates(pt[0],pt[1])
+            if xyres[0] > maxX:
+                maxX = xyres[0]
+            if xyres[0] < minX:
+                minX = xyres[0]
+            if xyres[1] > maxY:
+                maxY = xyres[1]
+            if xyres[1] < minY:
+                minY = xyres[1]
+        self.offsetX = minX
+        self.offsetY = minY
+        diffX = maxX - minX
+        #diffY = maxY - minY
+        self.scaleFactor= 1.0/diffX * range
+        #print str(minX) + "-" + str(maxX)
+            
     def get3dCoordinates(self, u, v):
+        #u=u-320
+        #v=v-240
         eq = np.array([[self.mtx[0,0], self.mtx[0,2]],[self.mtx[1,0],self.mtx[1,2]]])
         re = np.array([u-self.mtx[0,3], v-self.mtx[1,3]])
         xyres= np.linalg.solve(eq,re)
+        xyres[0] = (xyres[0]-self.offsetX) * self.scaleFactor
+        xyres[1] = (xyres[1]-self.offsetY) * self.scaleFactor
         return xyres

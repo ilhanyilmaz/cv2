@@ -30,29 +30,29 @@ class MotionTracker():
         return self.contours
 
     def getObjectPositions(self):
-        i=1
+        posImage = np.zeros((500,500,3), np.uint8)
+        
+        #i=1
         for contour in self.contours:
             area = cv2.contourArea(contour)
             #print area
             if area < 10:
                 continue
             x,y,w,h = cv2.boundingRect(contour)
-            if i==1 :
+            objPos = self.estimator.get3dCoordinates(x+w/2, y+h)
+            cv2.circle(posImage, (int(objPos[0]),int(objPos[1])), 10, (0,255,0),-1)
+            #if i==1 :
                 #print 'obj{0}= {1}-{2}'.format(i, str(x+w/2), str(y+h))
-                print self.estimator.get3dCoordinates(x+w/2, y+h)
-            i+=1
-
+                #print self.estimator.get3dCoordinates(x+w/2, y+h)
+            #i+=1
+        cv2.imshow("pos", posImage)
     def drawContours(self, image):
-        i=1
         for contour in self.contours:
             area = cv2.contourArea(contour)
             #print area
             if area < 10:
                 continue
             x,y,w,h = cv2.boundingRect(contour)
-            #print "{0}-{1}/{2}-{3}".format(x,y,w,h)
-            if i==1 :
-                cv2.rectangle(image, (x,y), (x+w,y+h), (0,255,0))
-            i+=1
+            cv2.rectangle(image, (x,y), (x+w,y+h), (0,255,0))
             #cv2.drawContours(img,contours,-1,(0,255,0),3)
         return image

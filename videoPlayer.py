@@ -8,14 +8,16 @@ class VideoPlayer():
         self.playing = True
         self.step = 1
         self.show = show
+        self.image = None
     def loop(self):
         key = -1
         currentPos = self.capture.get(cv2.cv.CV_CAP_PROP_POS_FRAMES)
         nextPos = currentPos + self.step
         self.capture.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, nextPos)
+        f, self.image = self.capture.read()
         if self.show:
-            ret, image = self.capture.retrieve()
-            cv2.imshow('video player',image)
+            #ret, image = self.capture.read()
+            cv2.imshow('video player',self.image)
         if self.playing == True:
             key = cv2.waitKey(self.waitLength)
         else:
