@@ -3,23 +3,23 @@ import numpy as np
 import sys
 import locationEstimator as le
 
-class MotionTracker():
+class MotionTracker(object):
 
-    def __init__(self, backImage, calibrationFile = None):
-        self.THRESHOLD = 10
-        self.backImage = backImage
-        self.KERNEL_OPEN = np.ones((2,2),np.uint8)
+    def __init__(self, calibrationFile, backImage = None):
+        self.KERNEL_OPEN = np.ones((1,1),np.uint8)
         self.KERNEL_CLOSE = np.ones((10,10),np.uint8)
         self.contours = None
         self.frame = None
+        if not backImage == None :
+            self.backImage = backImage
         if not calibrationFile == None :
             self.estimator = le.LocationEstimator(calibrationFile)
 
     def getMovingObjects(self, frame):
-        #imgGray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         self.frame = frame.copy()
         diffImage = cv2.absdiff(self.backImage,self.frame)
-        ret, threshold = cv2.threshold(diffImage, self.THRESHOLD, 255, cv2.THRESH_BINARY)
+        ret, threshold = cv2.threshold(diffImage, 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
+        #ret, threshold = cv2.threshold(diffImage, self.THRESHOLD, 255, cv2.THRESH_BINARY)
         threshold = cv2.morphologyEx(threshold, cv2.MORPH_OPEN, self.KERNEL_OPEN)
         #threshold = cv2.erode(threshold,kernel,iterations = 1)
         threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
@@ -30,8 +30,9 @@ class MotionTracker():
         return self.contours
 
     def getObjectPositions(self):
+        if self.contours == None :
+            return
         posImage = np.zeros((500,500,3), np.uint8)
-        
         #i=1
         for contour in self.contours:
             area = cv2.contourArea(contour)
@@ -46,13 +47,15 @@ class MotionTracker():
                 #print self.estimator.get3dCoordinates(x+w/2, y+h)
             #i+=1
         cv2.imshow("pos", posImage)
-    def drawContours(self, image):
+    def drawContours(self):
+        if self.contours == None:
+            return self.frame
         for contour in self.contours:
             area = cv2.contourArea(contour)
             #print area
             if area < 10:
                 continue
             x,y,w,h = cv2.boundingRect(contour)
-            cv2.rectangle(image, (x,y), (x+w,y+h), (0,255,0))
+            cv2.rectangle(self.frame, (x,y), (x+w,y+h), (0,255,0))
             #cv2.drawContours(img,contours,-1,(0,255,0),3)
-        return image
+        return self.frame

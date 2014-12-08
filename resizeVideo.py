@@ -108,8 +108,8 @@ def main(argv):
 
 
     cap = cv2.VideoCapture(inputfile)
-    orgHeight = int(cap.get(cv.CV_CAP_PROP_FRAME_WIDTH))
-    orgWidth = int(cap.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
+    orgHeight = int(cap.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
+    orgWidth = int(cap.get(cv.CV_CAP_PROP_FRAME_WIDTH))
     fps = cap.get(cv.CV_CAP_PROP_FPS)
     totalFrames = int(cap.get(cv.CV_CAP_PROP_FRAME_COUNT))
 

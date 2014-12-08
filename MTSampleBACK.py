@@ -4,7 +4,7 @@ import numpy as np
 import sys
 
 import backgroundExtractor as be
-import motionTracker as mt
+import motionTrackerBACK as mt
 import videoPlayer as vp
 
 def updateBackImage(capture, perfection):
@@ -34,11 +34,11 @@ def main(argv):
         backImage = updateBackImage(capture, 50)
         if backImage == None:
             return 0
-        motionTracker = mt.MotionTracker(backImage, './sample/calibration/calibration.npz')
+        motionTracker = mt.MotionTrackerBACK('./sample/calibration/calibration.npz', backImage)
 
         while capture.isOpened :
             #print capture.get(cv2.cv.CV_CAP_PROP_)
-            f,frame = capture.retrieve()
+            f,frame = capture.read()
             frameGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             mo = motionTracker.getMovingObjects(frameGray)
             #print len(mo)
@@ -46,20 +46,19 @@ def main(argv):
                 backImage = updateBackImage(capture, 50)
                 if backImage == None:
                     break
-                #motionTracker = mt.MotionTracker(backImage)
-                motionTracker = mt.MotionTracker(backImage, './sample/calibration/calibration.npz')
+                motionTracker = mt.MotionTrackerBACK('./sample/calibration/calibration.npz', backImage)
                 continue
             motionTracker.getObjectPositions()
-            frame = motionTracker.drawContours(frame)
+            frame = motionTracker.drawContours()
 	    cv2.imshow('tracker', frame)
         
-            player.loop()
-
-
-            #if(cv2.waitKey(27)!=-1):
-            #    capture.release()
-            #    cv2.destroyAllWindows()
-            #    break
+            if not player == None :
+                player.loop()
+            else :
+                if(cv2.waitKey(27)!=-1):
+                    capture.release()
+                    cv2.destroyAllWindows()
+                    break
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
