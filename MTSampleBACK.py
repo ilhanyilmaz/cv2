@@ -7,7 +7,7 @@ import backgroundExtractor as be
 import motionTrackerBACK as mt
 import videoPlayer as vp
 
-def updateBackImage(capture, perfection):
+"""def updateBackImage(capture, perfection):
     if capture.isOpened :
         backExtr = be.BackgroundExtractor(perfection)
         backImage =backExtr.extract(capture, 400)
@@ -15,7 +15,7 @@ def updateBackImage(capture, perfection):
             cv2.imshow('backImage', backImage)
 
         return backImage
-    
+"""    
 def main(argv):
     capture = None
     inputFile = None
@@ -31,10 +31,7 @@ def main(argv):
 
 
     if capture.isOpened :
-        backImage = updateBackImage(capture, 50)
-        if backImage == None:
-            return 0
-        motionTracker = mt.MotionTrackerBACK('./sample/calibration/calibration.npz', backImage)
+        motionTracker = mt.MotionTrackerBACK('./sample/calibration/calibration.npz', capture)
 
         while capture.isOpened :
             #print capture.get(cv2.cv.CV_CAP_PROP_)
@@ -43,15 +40,12 @@ def main(argv):
             mo = motionTracker.getMovingObjects(frameGray)
             #print len(mo)
             if len(mo) > 30 :
-                backImage = updateBackImage(capture, 50)
-                if backImage == None:
-                    break
-                motionTracker = mt.MotionTrackerBACK('./sample/calibration/calibration.npz', backImage)
+                motionTracker = mt.MotionTrackerBACK('./sample/calibration/calibration.npz', capture)
                 continue
             motionTracker.getObjectPositions()
             frame = motionTracker.drawContours()
-	    cv2.imshow('tracker', frame)
-        
+            cv2.imshow('tracker', frame)
+           
             if not player == None :
                 player.loop()
             else :

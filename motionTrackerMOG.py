@@ -6,9 +6,13 @@ import motionTracker as mt
 
 class MotionTrackerMOG(mt.MotionTracker):
 
-    def __init__(self, calibration, backImage):
-        super(self.__class__,self).__init__(calibration)
+    def __init__(self, calibration, capture, backImage = None):
+        super(self.__class__,self).__init__(calibration, capture, backImage)
+        if backImage == None :
+                self.updateBackgroundImage(capture, 40)
         self.fgbg = cv2.BackgroundSubtractorMOG()
+        if self.backImage == None :
+            self.fgbg.apply(self.backImage)
 
     def getMovingObjects(self, frame):
         self.frame = frame.copy()

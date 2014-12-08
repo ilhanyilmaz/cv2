@@ -18,11 +18,11 @@ def main(argv):
         player = vp.VideoPlayer(capture)
     else :
         print "Opening camera."
-        capture=cv2.VideoCapture(0)
+        capture=cv2.VideoCapture(1)
 
 
     if capture.isOpened :
-        motionTracker = mt.MotionTrackerDIFF('./sample/calibration/calibration.npz')
+        motionTracker = mt.MotionTrackerDIFF('./sample/calibration/calibration.npz', capture)
 
         while capture.isOpened :
             f,frame = capture.read()
@@ -32,8 +32,8 @@ def main(argv):
             frame = motionTracker.drawContours()
             if frame == None :
                 continue
-	    cv2.imshow('tracker', frame)
-        
+            cv2.imshow('tracker', frame)
+
             if not player == None :
                 player.loop()
             else :

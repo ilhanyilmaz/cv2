@@ -4,8 +4,14 @@ import sys
 import locationEstimator as le
 import motionTracker as mt
 
-class MotionTrackerBACK(mt.MotionTracker):
 
+class MotionTrackerBACK(mt.MotionTracker):
+    
+    def __init__(self, calibrationFile, capture, backImage = None):
+        super(self.__class__, self).__init__(calibrationFile, capture, backImage)
+        if backImage == None :
+            self.updateBackgroundImage(capture, 40)
+    
     def getMovingObjects(self, frame):
         #imgGray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         self.frame = frame.copy()

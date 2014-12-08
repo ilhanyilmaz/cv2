@@ -5,8 +5,8 @@ import motionTracker as mt
 
 class MotionTrackerDIFF(mt.MotionTracker):
 
-    def __init__(self, calibration):
-        super(self.__class__, self).__init__(calibration)
+    def __init__(self, calibration, capture):
+        super(self.__class__, self).__init__(calibration, capture)
         #self.THRESHOLD = 10
         self.KERNEL_OPEN = np.ones((1,1),np.uint8)
         self.KERNEL_CLOSE = np.ones((10,10),np.uint8)
