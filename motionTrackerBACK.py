@@ -15,6 +15,11 @@ class MotionTrackerBACK(mt.MotionTracker):
     def getMovingObjects(self, frame):
         #imgGray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         self.frame = frame.copy()
+        #self.frame = cv2.bilateralFilter(self.frame,9,75,75)
+        self.frame = cv2.blur(self.frame, (5,5))
+        self.backImage = self.backExtr.feed(self.frame)
+        cv2.imshow('backImage', self.backImage)
+        
         diffImage = cv2.absdiff(self.backImage,self.frame)
         ret, threshold = cv2.threshold(diffImage, 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
         #ret, threshold = cv2.threshold(diffImage, self.THRESHOLD, 255, cv2.THRESH_BINARY)

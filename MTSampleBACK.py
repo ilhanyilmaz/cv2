@@ -39,9 +39,9 @@ def main(argv):
             frameGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             mo = motionTracker.getMovingObjects(frameGray)
             #print len(mo)
-            if len(mo) > 30 :
-                motionTracker = mt.MotionTrackerBACK('./sample/calibration/calibration.npz', capture)
-                continue
+            #if len(mo) > 50 :
+            #    motionTracker = mt.MotionTrackerBACK('./sample/calibration/calibration.npz', capture)
+            #    continue
             motionTracker.getObjectPositions()
             frame = motionTracker.drawContours()
             cv2.imshow('tracker', frame)
