@@ -18,7 +18,7 @@ def main(argv):
         player = vp.VideoPlayer(capture)
     else :
         print "Opening camera."
-        capture=cv2.VideoCapture(1)
+        capture=cv2.VideoCapture(0)
 
 
     if capture.isOpened :
