@@ -3,14 +3,20 @@ import numpy as np
 import sys
 import locationEstimator as le
 import motionTracker as mt
+import backgroundExtractor2 as be
 
 
 class MotionTrackerBACK(mt.MotionTracker):
     
-    def __init__(self, calibrationFile, capture, backImage = None):
-        super(self.__class__, self).__init__(calibrationFile, capture, backImage)
-        if backImage == None :
-            self.updateBackgroundImage(capture, 40)
+    def __init__(self, calibrationFile, capture, perfection = 90, backImage = None, ):
+        super(self.__class__, self).__init__(calibrationFile, capture)
+        self.perfection = perfection
+        self.backExtr = be.BackgroundExtractor(self.perfection)
+        self.THRESHOLD = 20
+        if not backImage == None :
+            self.backImage = backImage
+        else :
+            self.backImage = None
     
     def getMovingObjects(self, frame):
         #imgGray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -31,3 +37,13 @@ class MotionTrackerBACK(mt.MotionTracker):
         #threshold = cv2.erode(threshold,kernel,iterations = 1)
         self.contours, hierachy = cv2.findContours(threshold, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
         return self.contours
+
+    def updateBackgroundImage(self, capture, perfection, frameCountLimit):
+        self.backExtr = be.BackgroundExtractor(perfection)
+        if self.capture.isOpened :
+            self.backImage = self.backExtr.extract(capture, frameCountLimit)
+            if not self.backImage == None:
+                cv2.imshow('backImage', self.backImage)
+            return self.backImage
+        
+        return self.backImage

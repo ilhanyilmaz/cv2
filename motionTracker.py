@@ -2,38 +2,20 @@ import cv2
 import numpy as np
 import sys
 import locationEstimator as le
-import backgroundExtractor2 as be
 
 class MotionTracker(object):
 
-    def __init__(self, calibrationFile, capture, backImage = None):
+    def __init__(self, calibrationFile, capture):
         self.KERNEL_OPEN = np.ones((1,1),np.uint8)
         self.KERNEL_CLOSE = np.ones((10,10),np.uint8)
         self.contours = None
         self.frame = None
         self.capture = capture
-        self.backExtr = None
-        if not backImage == None :
-            self.backImage = backImage
-        else :
-            self.backImage = None
         if not calibrationFile == None :
             self.estimator = le.LocationEstimator(calibrationFile)
-
-    def updateBackgroundImage(self, capture, perfection):
-        self.backExtr = be.BackgroundExtractor(perfection)
-        if self.capture.isOpened :
-            self.backImage = self.backExtr.extract(capture, 90)
-            if not self.backImage == None:
-                cv2.imshow('backImage', self.backImage)
-            return self.backImage
-        
-        return self.backImage
     
     def getMovingObjects(self, frame):
         self.frame = frame.copy()
-        #self.frame = cv2.blur(self.frame, (5,5))
-        #self.frame = cv2.bilateralFilter(self.frame,9,75,75)
         diffImage = cv2.absdiff(self.backImage,self.frame)
         ret, threshold = cv2.threshold(diffImage, 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
         #ret, threshold = cv2.threshold(diffImage, self.THRESHOLD, 255, cv2.THRESH_BINARY)
