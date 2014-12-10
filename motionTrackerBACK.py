@@ -8,7 +8,7 @@ import backgroundExtractor2 as be
 
 class MotionTrackerBACK(mt.MotionTracker):
     
-    def __init__(self, calibrationFile, capture, perfection = 90, backImage = None, ):
+    def __init__(self, calibrationFile, capture, perfection = 100, backImage = None, ):
         super(self.__class__, self).__init__(calibrationFile, capture)
         self.perfection = perfection
         self.backExtr = be.BackgroundExtractor(self.perfection)
@@ -25,7 +25,6 @@ class MotionTrackerBACK(mt.MotionTracker):
         #self.frame = cv2.bilateralFilter(self.frame,9,75,75)
         self.frame = cv2.blur(self.frame, (self.blurValue,self.blurValue))
         self.backImage = self.backExtr.feed(self.frame)
-        cv2.imshow('backImage', self.backImage)
         
         diffImage = cv2.absdiff(self.backImage,self.frame)
         #ret, threshold = cv2.threshold(diffImage, 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
@@ -40,6 +39,7 @@ class MotionTrackerBACK(mt.MotionTracker):
         return self.contours
 
     def updateBackgroundImage(self, capture, perfection, frameCountLimit):
+        ### NOT USED FOR A WHILE, SO CHECK IT BEFORE USING IT
         self.backExtr = be.BackgroundExtractor(perfection)
         if self.capture.isOpened :
             self.backImage = self.backExtr.extract(capture, frameCountLimit)
@@ -50,15 +50,18 @@ class MotionTrackerBACK(mt.MotionTracker):
         return self.backImage
 
     def setParameter(self, parameter, value):
-        if parameter == 'perfection':
-            self.backExtr.PERFECTION = value
-        elif parameter == 'blur':
+        
+        if parameter == 'blur':
             self.blurValue = value
         elif parameter == 'threshold':
             self.THRESHOLD = value
-        elif parameter == 'back_threshold':
-            self.backExtr.THRESHOLD = value
         elif parameter == 'm_open':
             self.KERNEL_OPEN = np.ones((value,value),np.uint8)
         elif parameter == 'm_close':
-            self.KERNEL_CLOSE = np.ones((value,value),np.uint8)
+            self.KERNEL_CLOSE = np.ones((value,value/2),np.uint8)
+        elif parameter == 'show_back_image':
+            self.backExtr.showBackImage = value
+            if value :
+                self.backExtr.createTrackbars()
+        elif parameter == 'show_positions':
+            self.showPositions = value

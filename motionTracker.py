@@ -11,6 +11,7 @@ class MotionTracker(object):
         self.contours = None
         self.frame = None
         self.capture = capture
+        self.showPositions = True
         if not calibrationFile == None :
             self.estimator = le.LocationEstimator(calibrationFile)
     
@@ -45,7 +46,8 @@ class MotionTracker(object):
                 #print 'obj{0}= {1}-{2}'.format(i, str(x+w/2), str(y+h))
                 #print self.estimator.get3dCoordinates(x+w/2, y+h)
             #i+=1
-        cv2.imshow("pos", posImage)
+        if self.showPositions:
+            cv2.imshow("positions", posImage)
     def drawContours(self):
         if self.contours == None:
             return self.frame

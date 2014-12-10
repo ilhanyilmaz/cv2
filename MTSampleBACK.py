@@ -6,71 +6,104 @@ import sys
 import backgroundExtractor as be
 import motionTrackerBACK as mt
 import videoPlayer as vp
+import brightestobject as bo
 
-perfection = 50
 blur = 5
 threshold = 20
-back_threshold = 6
 m_open = 1
-m_close = 10
+m_close = 12
 motionTracker = None
+showTracker = True
+showBackImage = True
+showPositions = True
 
 def createTrackbars():
-    global perfection, blur, threshold, back_threshold, m_open, m_close
-    cv2.namedWindow('settings')
     
-    cv2.createTrackbar('blur','settings',blur, 10, np.uint)
-    cv2.createTrackbar('perfection','settings',perfection, 250, np.uint)
-    cv2.createTrackbar('back_threshold','settings',back_threshold, 30, np.uint)
-    cv2.createTrackbar('m_open','settings',m_open, 5, np.uint)
-    cv2.createTrackbar('m_close','settings',m_close, 20, np.uint)
-    cv2.createTrackbar('threshold','settings',threshold, 30, np.uint)
+    cv2.namedWindow('video player')
+    cv2.createTrackbar('show 2D positions', 'video player',1, 1, np.uint)
+    cv2.createTrackbar('show background', 'video player', 1, 1, np.uint)
+    cv2.createTrackbar('show tracker', 'video player', 1, 1, np.uint)
+    createTrackerWindow()
     
-    
+def createTrackerWindow():
 
-def checkSettings():
-    global perfection, blur, threshold, back_threshold, m_open, m_close
-    global motionTracker
-    if motionTracker == None:
-        return
-    value = cv2.getTrackbarPos('perfection','settings')
-    if value != perfection :
-        perfection = value
-        motionTracker.setParameter('perfection', value)
-        
-    value = cv2.getTrackbarPos('blur','settings')
+    global blur, threshold, m_open, m_close
+    
+    cv2.namedWindow('tracker')
+    cv2.createTrackbar('blur','tracker',blur, 10, np.uint)
+    cv2.createTrackbar('m_open','tracker',m_open, 5, np.uint)
+    cv2.createTrackbar('m_close','tracker',m_close, 20, np.uint)
+    cv2.createTrackbar('threshold','tracker',threshold, 30, np.uint)
+
+def trackerWindowSettings():
+
+    global blur, threshold, m_open, m_close
+    
+    value = cv2.getTrackbarPos('blur','tracker')
     if value == 0:
         value = 1
     if value != blur :
         blur = value
         motionTracker.setParameter('blur', value)
                                    
-    value = cv2.getTrackbarPos('threshold','settings')
+    value = cv2.getTrackbarPos('threshold','tracker')
     if value != threshold :
         threshold = value
         motionTracker.setParameter('threshold', value)
 
-    value = cv2.getTrackbarPos('back_threshold','settings')
-    if value != back_threshold :
-        back_threshold = value
-        motionTracker.setParameter('back_threshold', value)
-
-    value = cv2.getTrackbarPos('m_open','settings')
+    value = cv2.getTrackbarPos('m_open','tracker')
     if value == 0:
         value = 1
     if value != m_open :
         m_open = value
         motionTracker.setParameter('m_open', value)
 
-    value = cv2.getTrackbarPos('m_close','settings')
+    value = cv2.getTrackbarPos('m_close','tracker')
     if value == 0:
         value = 1
     if value != m_close :
         m_close = value
         motionTracker.setParameter('m_close', value)
+        
+def checkSettings():
+    
+    global motionTracker
+    global showTracker, showPositions, showBackImage
+    
+    if motionTracker == None:
+        return
+    
+    if showTracker :
+        trackerWindowSettings()
+
+    value = cv2.getTrackbarPos('show 2D positions', 'video player')
+    if value != showPositions:
+        motionTracker.setParameter('show_positions', value)
+        if value == False:
+            cv2.destroyWindow('positions')
+        showPositions = value
+
+    value = cv2.getTrackbarPos('show background', 'video player')
+
+    if value != showBackImage:
+        motionTracker.setParameter('show_back_image', value)
+        if value == 0:
+            cv2.destroyWindow('backImage')
+        showBackImage = value
+        
+    value = cv2.getTrackbarPos('show tracker', 'video player')
+    
+    if value == False and showTracker:
+        cv2.destroyWindow('tracker')
+        showTracker = False
+    elif value == True and not showTracker:
+        createTrackerWindow()
+        showTracker = True
 
 def main(argv):
     global motionTracker
+    global showTracker
+    
     capture = None
     inputFile = None
     player = None
@@ -92,15 +125,29 @@ def main(argv):
             checkSettings()
             #print capture.get(cv2.cv.CV_CAP_PROP_)
             f,frame = capture.read()
+            #hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            #h,s,v = cv2.split(hsv)
+            #cv2.imshow("h",h)
+            #cv2.imshow("s",s)
+            #cv2.imshow("v",v)
             frameGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             mo = motionTracker.getMovingObjects(frameGray)
+            
+
             #print len(mo)
             #if len(mo) > 50 :
             #    motionTracker = mt.MotionTrackerBACK('./sample/calibration/calibration.npz', capture)
             #    continue
             motionTracker.getObjectPositions()
-            frame = motionTracker.drawContours()
-            cv2.imshow('tracker', frame)
+            frameGray = motionTracker.drawContours()
+
+            boPos = bo.findBall(frame, mo) #brightest object should be a BALL
+            if boPos < len(mo) and boPos > -1:
+                x,y,w,h = cv2.boundingRect(mo[boPos])
+                cv2.rectangle(frameGray, (x,y), (x+w,y+h), (255,255,255))
+
+            if showTracker : 
+                cv2.imshow('tracker', frameGray)
            
             if not player == None :
                 player.loop()
