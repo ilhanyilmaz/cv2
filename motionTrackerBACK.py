@@ -12,6 +12,7 @@ class MotionTrackerBACK(mt.MotionTracker):
         super(self.__class__, self).__init__(calibrationFile, capture)
         self.perfection = perfection
         self.backExtr = be.BackgroundExtractor(self.perfection)
+        self.blurValue = 5
         self.THRESHOLD = 20
         if not backImage == None :
             self.backImage = backImage
@@ -22,13 +23,13 @@ class MotionTrackerBACK(mt.MotionTracker):
         #imgGray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         self.frame = frame.copy()
         #self.frame = cv2.bilateralFilter(self.frame,9,75,75)
-        self.frame = cv2.blur(self.frame, (5,5))
+        self.frame = cv2.blur(self.frame, (self.blurValue,self.blurValue))
         self.backImage = self.backExtr.feed(self.frame)
         cv2.imshow('backImage', self.backImage)
         
         diffImage = cv2.absdiff(self.backImage,self.frame)
-        ret, threshold = cv2.threshold(diffImage, 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
-        #ret, threshold = cv2.threshold(diffImage, self.THRESHOLD, 255, cv2.THRESH_BINARY)
+        #ret, threshold = cv2.threshold(diffImage, 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
+        ret, threshold = cv2.threshold(diffImage, self.THRESHOLD, 255, cv2.THRESH_BINARY)
         threshold = cv2.morphologyEx(threshold, cv2.MORPH_OPEN, self.KERNEL_OPEN)
         #threshold = cv2.erode(threshold,kernel,iterations = 1)
         threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
@@ -47,3 +48,17 @@ class MotionTrackerBACK(mt.MotionTracker):
             return self.backImage
         
         return self.backImage
+
+    def setParameter(self, parameter, value):
+        if parameter == 'perfection':
+            self.backExtr.PERFECTION = value
+        elif parameter == 'blur':
+            self.blurValue = value
+        elif parameter == 'threshold':
+            self.THRESHOLD = value
+        elif parameter == 'back_threshold':
+            self.backExtr.THRESHOLD = value
+        elif parameter == 'm_open':
+            self.KERNEL_OPEN = np.ones((value,value),np.uint8)
+        elif parameter == 'm_close':
+            self.KERNEL_CLOSE = np.ones((value,value),np.uint8)
