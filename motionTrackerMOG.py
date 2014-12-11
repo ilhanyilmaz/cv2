@@ -7,8 +7,9 @@ import backgroundExtractor2 as be
 
 class MotionTrackerMOG(mt.MotionTracker):
 
-    def __init__(self, calibration, capture, backImage = None):
-        super(self.__class__,self).__init__(calibration, capture)
+    def __init__(self, capture, calibrationFile = None, backImage = None, blur = 5):
+		
+        super(self.__class__, self).__init__(capture, calibrationFile = calibrationFile, blur=blur)
         if not backImage == None :
             self.backImage = backImage
         else :
@@ -19,18 +20,14 @@ class MotionTrackerMOG(mt.MotionTracker):
         if self.backImage == None :
             self.fgbg.apply(self.backImage)
         
-
-    def getMovingObjects(self, frame):
-        self.frame = frame.copy()
-        fgmask = self.fgbg.apply(self.frame)
-
-        threshold = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, self.KERNEL_OPEN)
-        threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
-
-        self.contours, hierachy = cv2.findContours(threshold, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-        return self.contours
+    def update(self, frame):
+		
+		super(self.__class__, self).update(frame)
+		
+        self.diffImage = self.fgbg.apply(self.frame)
 
     def updateBackgroundImage(self, capture, perfection, frameCountLimit):
+		
         self.backExtr = be.BackgroundExtractor(perfection)
         if self.capture.isOpened :
             self.backImage = self.backExtr.extract(capture, frameCountLimit)

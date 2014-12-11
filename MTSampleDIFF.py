@@ -22,12 +22,13 @@ def main(argv):
 
 
     if capture.isOpened :
-        motionTracker = mt.MotionTrackerDIFF('./sample/calibration/calibration.npz', capture)
+        motionTracker = mt.MotionTrackerDIFF(capture, './sample/calibration/calibration.npz')
 
         while capture.isOpened :
             f,frame = capture.read()
             frameGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            mo = motionTracker.getMovingObjects(frameGray)
+            motionTracker.update(frameGray)
+            mo = motionTracker.getMovingObjects()
             motionTracker.getObjectPositions()
             frame = motionTracker.drawContours()
             if frame == None :

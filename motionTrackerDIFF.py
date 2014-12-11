@@ -6,7 +6,8 @@ import motionTracker as mt
 class MotionTrackerDIFF(mt.MotionTracker):
 
     def __init__(self, calibration, capture):
-        super(self.__class__, self).__init__(calibration, capture)
+        
+        super(self.__class__, self).__init__(capture, calibrationFile = calibrationFile, blur=blur)
         #self.THRESHOLD = 10
         self.KERNEL_OPEN = np.ones((1,1),np.uint8)
         self.KERNEL_CLOSE = np.ones((10,10),np.uint8)
@@ -16,8 +17,8 @@ class MotionTrackerDIFF(mt.MotionTracker):
         self.nextFrame = None
         #self.calibration = calibration
 
-    def getMovingObjects(self, frame):
-        if self.prevFrame == None :
+    def update(self, frame):
+		if self.prevFrame == None :
             self.prevFrame = frame.copy()
             return None
         elif self.frame == None:
@@ -36,13 +37,6 @@ class MotionTrackerDIFF(mt.MotionTracker):
         d2 = cv2.absdiff(self.frame, self.nextFrame)
         #ret, t2 = cv2.threshold(d2, self.THRESHOLD, 255, cv2.THRESH_BINARY)
         ret, t2 = cv2.threshold(d2, 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
-
-        diff = cv2.bitwise_and(t1,t2)
-        diff = cv2.morphologyEx(diff, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
-        diff = cv2.morphologyEx(diff, cv2.MORPH_OPEN, self.KERNEL_OPEN)
-        cv2.imshow('diff', diff)
-
-
-        self.contours, hierachy = cv2.findContours(diff, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-        return self.contours
+        self.diffImage = cv2.bitwise_and(t1,t2)
+        
 

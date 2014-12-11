@@ -23,17 +23,19 @@ def main(argv):
 
 
     if capture.isOpened :
-        motionTracker = mt.MotionTrackerMOG('./sample/calibration/calibration.npz', capture)
+        motionTracker = mt.MotionTrackerMOG(capture, './sample/calibration/calibration.npz')
 
         while capture.isOpened :
             #print capture.get(cv2.cv.CV_CAP_PROP_)
             f,frame = capture.read()
             frameGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            mo = motionTracker.getMovingObjects(frameGray)
+            motionTracker.update(frameGray)
+            mo = motionTracker.getMovingObjects()
             #print len(mo)
             if len(mo) > 30 :
-                motionTracker = mt.MotionTrackerMOG('./sample/calibration/calibration.npz', capture)
+                motionTracker = mt.MotionTrackerMOG(capture, './sample/calibration/calibration.npz')
                 continue
+            
             motionTracker.getObjectPositions()
             frame = motionTracker.drawContours()
             cv2.imshow('tracker', frame)
