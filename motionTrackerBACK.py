@@ -8,7 +8,7 @@ import backgroundExtractor2 as be
 
 class MotionTrackerBACK(mt.MotionTracker):
     
-    def __init__(self, capture, calibrationFile=None, blur=5, perfection=100, backImage = None):
+    def __init__(self, capture, calibrationFile=None, blur=2, perfection=100, backImage = None):
         
         super(self.__class__, self).__init__(capture, calibrationFile = calibrationFile, blur=blur)
         
@@ -40,11 +40,11 @@ class MotionTrackerBACK(mt.MotionTracker):
         
         return self.backImage
 
-    def setParameter(self, parameter, value):
+    def setParameter(self, parameter, value, value2=None):
         
         if parameter == 'show_back_image':
             self.backExtr.showBackImage = value
             if value :
                 self.backExtr.createTrackbars()
         else :
-            super(self.__class__, self).setParameter(parameter, value)
+            super(self.__class__, self).setParameter(parameter, value, value2)

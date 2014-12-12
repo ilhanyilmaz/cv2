@@ -8,6 +8,7 @@ import motionTrackerBACK as mt
 import videoPlayer as vp
 import brightestobject as bo
 import objectRecognizer as objr
+import camShiftTracker as cst
 
 motionTracker = None
 
@@ -46,18 +47,18 @@ def checkSettings():
         if value == 0:
             cv2.destroyWindow('backImage')
             
-    value = cv2.getTrackbarPos('show diff image', 'video player')
-    if value != motionTracker.showDiffImage:
-        motionTracker.setParameter('show_diff_image', value)
-        if value == 0:
-            cv2.destroyWindow('diff image')
-            
     value = cv2.getTrackbarPos('show tracker', 'video player')
-    if value == False and motionTracker.showTracker:
-        cv2.destroyWindow('tracker')
-    elif value == True and not motionTracker.showTracker:
-        motionTracker.createTrackerWindow()
-    motionTracker.setParameter('show_tracker', value)
+    if value != motionTracker.showTracker:
+        motionTracker.setParameter('show_tracker', value)
+        if value == 0:
+            cv2.destroyWindow('tracker')
+            
+    value = cv2.getTrackbarPos('show diff image', 'video player')
+    if value == False and motionTracker.showDiffImage:
+        cv2.destroyWindow('diff image')
+    elif value == True and not motionTracker.showDiffImage:
+        motionTracker.createDiffImageWindow()
+    motionTracker.setParameter('show_diff_image', value)
 
 def main(argv):
     global motionTracker
@@ -77,6 +78,8 @@ def main(argv):
 
 
     createTrackbars()
+    i=0
+    camShiftTracker = cst.CamShiftTracker()
     if capture.isOpened :
         motionTracker = mt.MotionTrackerBACK(capture, './sample/calibration/calibration.npz')
 
@@ -96,7 +99,16 @@ def main(argv):
             motionTracker.getObjectPositions()
             frameGray = motionTracker.drawContours()
 
-            objr.playersWithGreenJersey(frame, mo)           
+            ddi = motionTracker.getDilatedDiffImage(frame)
+            if i%90 == 0:
+                camShiftTracker.updateContours(ddi, mo)
+                
+            camShiftTracker.track(ddi)
+            i+=1
+
+            objr.playersWithGreenJersey(frame, mo)  
+            
+            
             #ballContour = bo.getBall(frame, motionTracker.diffImage) #brightest object should be a BALL
             #if not ballContour == None:
             #    x,y,w,h = cv2.boundingRect(ballContour)

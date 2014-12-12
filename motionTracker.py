@@ -5,10 +5,10 @@ import locationEstimator as le
 
 class MotionTracker(object):
 
-    def __init__(self, capture, calibrationFile = None, blur = 5):
+    def __init__(self, capture, calibrationFile = None, blur = 2):
 		
         self.KERNEL_OPEN = np.ones((1,1),np.uint8)
-        self.KERNEL_CLOSE = np.ones((10,10),np.uint8)
+        self.KERNEL_CLOSE = np.ones((5,5),np.uint8)
         self.blurValue = blur
         self.THRESHOLD = 20
         self.contours = None
@@ -21,7 +21,7 @@ class MotionTracker(object):
         if not calibrationFile == None :
             self.estimator = le.LocationEstimator(calibrationFile)
             
-        self.createTrackerWindow()
+        self.createDiffImageWindow()
     
     
     def getMovingObjects(self):
@@ -32,11 +32,16 @@ class MotionTracker(object):
         if self.diffImage == None:
 			return None
 
-        if self.showDiffImage:
-			cv2.imshow('diff image', self.diffImage)
+        #if self.showDiffImage:
+		#	cv2.imshow('diff image', self.diffImage)
         threshold = cv2.morphologyEx(self.diffImage, cv2.MORPH_OPEN, self.KERNEL_OPEN)
         threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
-
+        #threshold = cv2.erode(self.diffImage,self.KERNEL_OPEN,iterations = 1)
+        #threshold = cv2.dilate(threshold,self.KERNEL_CLOSE,iterations = 1)
+        
+        if self.showDiffImage:
+			cv2.imshow('diff image', self.getDilatedDiffImage(self.frame))
+			
         self.contours, hierachy = cv2.findContours(threshold, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
         return self.contours
         
@@ -45,6 +50,14 @@ class MotionTracker(object):
         self.frame = frame.copy()
         self.frame = cv2.blur(self.frame, (self.blurValue,self.blurValue))
 
+    def getDilatedDiffImage(self, frame):
+
+        threshold = cv2.morphologyEx(self.diffImage, cv2.MORPH_OPEN, self.KERNEL_OPEN)
+        threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
+        #threshold = cv2.erode(self.diffImage,self.KERNEL_OPEN,iterations = 1)
+        #threshold = cv2.dilate(threshold,self.KERNEL_CLOSE,iterations = 1)
+        return cv2.bitwise_and(frame, frame, mask = threshold)
+		
     def getObjectPositions(self):
         if self.contours == None :
             return
@@ -80,7 +93,7 @@ class MotionTracker(object):
 			cv2.imshow('tracker', self.frame)
         return self.frame
         
-    def setParameter(self, parameter, value):
+    def setParameter(self, parameter, value, value2=None):
         
         if parameter == 'blur':
             self.blurValue = value
@@ -88,8 +101,10 @@ class MotionTracker(object):
             self.THRESHOLD = value
         elif parameter == 'm_open':
             self.KERNEL_OPEN = np.ones((value,value),np.uint8)
+            #print self.KERNEL_OPEN
         elif parameter == 'm_close':
-            self.KERNEL_CLOSE = np.ones((value,value/2),np.uint8)
+            self.KERNEL_CLOSE = np.ones((value2,value),np.uint8)
+            #print self.KERNEL_CLOSE
         elif parameter == 'show_positions':
             self.showPositions = value
         elif parameter == 'show_diff_image':
@@ -97,45 +112,50 @@ class MotionTracker(object):
         elif parameter == 'show_tracker':
             self.showTracker = value
             
-    def createTrackerWindow(self):
+    def createDiffImageWindow(self):
     
-        cv2.namedWindow('tracker')
-        cv2.createTrackbar('blur','tracker',self.blurValue, 10, np.uint)
-        print len(self.KERNEL_OPEN[:1])
-        cv2.createTrackbar('m_open','tracker',len(self.KERNEL_OPEN[:1]), 5, np.uint)
-        cv2.createTrackbar('m_close','tracker',len(self.KERNEL_CLOSE[:1]), 20, np.uint)
-        cv2.createTrackbar('threshold','tracker',self.THRESHOLD, 100, np.uint)
+        cv2.namedWindow('diff image')
+        cv2.createTrackbar('blur','diff image',self.blurValue, 10, np.uint)
+        cv2.createTrackbar('m_open','diff image',len(self.KERNEL_OPEN[:1]), 5, np.uint)
+        j,i=self.KERNEL_CLOSE.shape
+        cv2.createTrackbar('m_close_x','diff image',i, 20, np.uint)
+        cv2.createTrackbar('m_close_y','diff image',j, 20, np.uint)
+        cv2.createTrackbar('threshold','diff image',self.THRESHOLD, 100, np.uint)
 
-    def trackerWindowSettings(self):
+    def diffImageWindowSettings(self):
 		
-        if not self.showTracker:
+        if not self.showDiffImage:
 			return
 			
-        value = cv2.getTrackbarPos('blur','tracker')
+        value = cv2.getTrackbarPos('blur','diff image')
         if value == 0:
             value = 1
         if value != self.blurValue :
             self.setParameter('blur', value)
                                    
-        value = cv2.getTrackbarPos('threshold','tracker')
+        value = cv2.getTrackbarPos('threshold','diff image')
         if value != self.THRESHOLD :
             self.setParameter('threshold', value)
 
-        value = cv2.getTrackbarPos('m_open','tracker')
+        j,i=self.KERNEL_OPEN.shape
+        value = cv2.getTrackbarPos('m_open','diff image')
         if value == 0:
             value = 1
-        if value != len(self.KERNEL_OPEN[:1]) :
+        if value != i :
             self.setParameter('m_open', value)
-
-        value = cv2.getTrackbarPos('m_close','tracker')
+        
+        value = cv2.getTrackbarPos('m_close_x','diff image')
         if value == 0:
             value = 1
-        if value != len(self.KERNEL_CLOSE[:1]):
-            self.setParameter('m_close', value)
+        v2 = cv2.getTrackbarPos('m_close_y','diff image')
+        if v2 == 0:
+            v2 = 1
+        self.setParameter('m_close', value, value2=v2)
+        
         
     def checkSettings(self):
     
-        if self.showTracker :
-            self.trackerWindowSettings()
+        if self.showDiffImage :
+            self.diffImageWindowSettings()
             
             

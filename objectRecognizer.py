@@ -69,7 +69,7 @@ def playersWithGreenJersey(frame, contours):
     
     jerseyMask = cv2.bitwise_and(hMask, sMask)
     jerseyMask = cv2.bitwise_and(jerseyMask, vMask)
-    cv2.imshow("colormask",jerseyMask)
+    ###cv2.imshow("colormask",jerseyMask)
     #cv2.imshow("sat",sat)
     #cv2.imshow("val",val)
     
@@ -91,7 +91,7 @@ def playersWithGreenJersey(frame, contours):
 			cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0))
         
     
-    cv2.imshow("jersey",frame)     
+    ###cv2.imshow("jersey",frame)     
     
     #contours = getContours(diffImage)
     #index = findBall(frame, contours)
