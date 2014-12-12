@@ -8,9 +8,9 @@ class MotionTracker(object):
     def __init__(self, capture, calibrationFile = None, blur = 2):
 		
         self.KERNEL_OPEN = np.ones((1,1),np.uint8)
-        self.KERNEL_CLOSE = np.ones((5,5),np.uint8)
+        self.KERNEL_CLOSE = np.ones((12,5),np.uint8)
         self.blurValue = blur
-        self.THRESHOLD = 20
+        self.THRESHOLD = 22
         self.contours = None
         self.frame = None
         self.capture = capture

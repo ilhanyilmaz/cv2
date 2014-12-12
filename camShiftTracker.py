@@ -17,19 +17,20 @@ class CamShiftTracker():
         i=0
         for contour in contours:
             c,r,w,h = cv2.boundingRect(contour)
-            
+            if w*h < 20:
+				continue
 			# set up the ROI for tracking
             roi = frame[r:r+h, c:c+w]
             hsv_roi =  cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
             
-            mask2 = cv2.inRange(hsv_roi, np.array((0., 10.,10.)), np.array((255.,250.,250.)))
+            mask2 = cv2.inRange(hsv_roi, np.array((0., 30.,30.)), np.array((255.,250.,250.)))
             mask = np.zeros((height,width), np.uint8)
             cv2.drawContours(mask, [contour], 0, 255, -1)
             maskArea = mask[r:r+h,c:c+w]
             maskArea = cv2.bitwise_and(maskArea, mask2)
             img = cv2.bitwise_and(roi,roi,mask=maskArea)
             #cv2.imshow('maskarea', mask2)
-            roi_hist = cv2.calcHist([hsv_roi],[0],maskArea,[180],[0,180])
+            roi_hist = cv2.calcHist([hsv_roi],[0],maskArea,[256],[0,256])
             cv2.normalize(roi_hist,roi_hist,0,255,cv2.NORM_MINMAX)
             #print i
             i+=1
@@ -48,6 +49,8 @@ class CamShiftTracker():
             w = track_window[2]
             h = track_window[3]
             
+            if w == 0 or h == 0:
+                continue
             
             #mask = cv2.inRange(hsv_roi, np.array((0., 0.,0.)), np.array((180.,255.,255.)))
             roi_hist = self.histograms[i]
@@ -55,12 +58,11 @@ class CamShiftTracker():
             
         
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            dst = cv2.calcBackProject([hsv],[0],roi_hist,[0,180],1)
+            dst = cv2.calcBackProject([hsv],[0],roi_hist,[0,256],1)
 
-            ret, self.movingObjects[i] = cv2.meanShift(dst, track_window, self.term_crit)
-            
+            #ret, self.movingObjects[i] = cv2.meanShift(dst, track_window, self.term_crit)
             # apply meanshift to get the new location
-            #ret, self.movingObjects[i] = cv2.CamShift(dst, track_window, self.term_crit)
+            ret, self.movingObjects[i] = cv2.CamShift(dst, track_window, self.term_crit)
             
             
             # Draw it on image
