@@ -34,10 +34,11 @@ class MotionTracker(object):
 
         #if self.showDiffImage:
 		#	cv2.imshow('diff image', self.diffImage)
-        threshold = cv2.morphologyEx(self.diffImage, cv2.MORPH_OPEN, self.KERNEL_OPEN)
+        #threshold = cv2.morphologyEx(self.diffImage, cv2.MORPH_OPEN, self.KERNEL_OPEN)
+        #threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
+        threshold = cv2.erode(self.diffImage,self.KERNEL_OPEN,iterations = 1)
+        threshold = cv2.dilate(threshold,self.KERNEL_OPEN,iterations = 1)
         threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
-        #threshold = cv2.erode(self.diffImage,self.KERNEL_OPEN,iterations = 1)
-        #threshold = cv2.dilate(threshold,self.KERNEL_CLOSE,iterations = 1)
         
         if self.showDiffImage:
 			cv2.imshow('diff image', self.getDilatedDiffImage(self.frame))

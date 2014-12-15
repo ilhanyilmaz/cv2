@@ -1,16 +1,20 @@
 import cv2
 import sys
+import videoPlayer as vp
 
-if len(sys.argv) == 1:
-    print "no input"
-    sys.exit(-1)
+def main(argv):
+    hsvV = False
+    
+    if len(argv) == 0:
+        print "no input"
+        return -1
+    if len(argv) >= 2 and argv[1] == '-hsv':
+        hsvV = True
+    capture = cv2.VideoCapture(argv[0])
+    player = vp.VideoPlayer(capture, hsv=hsvV)
+    
+    while capture.isOpened :
+        player.loop()
 
-capture = cv2.VideoCapture(sys.argv[1])
-
-while capture.isOpened :
-    f,frame = capture.read()
-    cv2.imshow('frame', frame)
-    if(cv2.waitKey(27)!=-1):
-        capture.release()
-        cv2.destroyAllWindows()
-        break
+if __name__=="__main__":
+    sys.exit(main(sys.argv[1:]))
