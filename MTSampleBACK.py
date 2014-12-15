@@ -10,7 +10,7 @@ import brightestobject as bo
 import objectRecognizer as objr
 import camShiftTracker as cst
 
-import arduino_comm as ac
+import arduinocomm as ac
 
 motionTracker = None
 
