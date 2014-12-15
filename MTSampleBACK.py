@@ -97,21 +97,22 @@ def main(argv):
             frameGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             motionTracker.update(frameGray)
             
-            mo = motionTracker.getMovingObjects()
-            motionTracker.getObjectPositions()
+            #mo = motionTracker.getMovingObjects()
+            #motionTracker.getObjectPositions()
             
             
-            frameGray = motionTracker.drawContours()
+            #frameGray = motionTracker.drawContours()
             
             #cv2.circle(frameGray, (biggestObjPos), 10, 255,-1)
             #cv2.imshow('framegray', frameGray)
             biggestObjPos = motionTracker.getBiggestMovingObject()
             height, width = frameGray.shape
-            biggestObjPos[0] = int(biggestObjPos[0] *100 / float(width))
-            biggestObjPos[1] = int(biggestObjPos[1] *100 / float(height))
-            ac.lookAt(biggestObjPos)
+            if not biggestObjPos == None:
+                x = int(biggestObjPos[0] *100 / float(width))
+                y = int(biggestObjPos[1] *100 / float(height))
+                ac.lookAt((x,y))
 
-            ddi = motionTracker.getDilatedDiffImage(frame)
+            """ddi = motionTracker.getDilatedDiffImage(frame)
             if i%90 == 0:
                 camShiftTracker.updateContours(ddi, mo)
                 
@@ -119,7 +120,7 @@ def main(argv):
             i+=1
 
             objr.playersWithGreenJersey(frame, mo)  
-            
+            """
             
             #ballContour = bo.getBall(frame, motionTracker.diffImage) #brightest object should be a BALL
             #if not ballContour == None:

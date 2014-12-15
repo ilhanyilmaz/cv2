@@ -14,9 +14,9 @@ class MotionTracker(object):
         self.contours = None
         self.frame = None
         self.capture = capture
-        self.showPositions = True
-        self.showTracker = True
-        self.showDiffImage = True
+        self.showPositions = False
+        self.showTracker = False
+        self.showDiffImage = False
         self.diffImage = None
         if not calibrationFile == None :
             self.estimator = le.LocationEstimator(calibrationFile)
