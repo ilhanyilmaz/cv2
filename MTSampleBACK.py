@@ -10,6 +10,8 @@ import brightestobject as bo
 import objectRecognizer as objr
 import camShiftTracker as cst
 
+import arduino_comm as ac
+
 motionTracker = None
 
 show2DPositions = False
@@ -97,7 +99,17 @@ def main(argv):
             
             mo = motionTracker.getMovingObjects()
             motionTracker.getObjectPositions()
+            
+            
             frameGray = motionTracker.drawContours()
+            
+            #cv2.circle(frameGray, (biggestObjPos), 10, 255,-1)
+            #cv2.imshow('framegray', frameGray)
+            biggestObjPos = motionTracker.getBiggestMovingObject()
+            height, width = frameGray.shape
+            biggestObjPos[0] = int(biggestObjPos[0] *100 / float(width))
+            biggestObjPos[1] = int(biggestObjPos[1] *100 / float(height))
+            ac.lookAt(biggestObjPos)
 
             ddi = motionTracker.getDilatedDiffImage(frame)
             if i%90 == 0:
