@@ -5,7 +5,7 @@ import locationEstimator as le
 
 class MotionTracker(object):
 
-    def __init__(self, capture, calibrationFile = None, blur = 2):
+    def __init__(self, capture, showTrackerImage = False, calibrationFile = None, blur = 2):
 		
         self.KERNEL_OPEN = np.ones((1,1),np.uint8)
         self.KERNEL_CLOSE = np.ones((12,5),np.uint8)
@@ -15,13 +15,13 @@ class MotionTracker(object):
         self.frame = None
         self.capture = capture
         self.showPositions = False
-        self.showTracker = False
+        self.showTracker = showTrackerImage
         self.showDiffImage = False
         self.diffImage = None
         if not calibrationFile == None :
             self.estimator = le.LocationEstimator(calibrationFile)
-            
-        self.createDiffImageWindow()
+        if self.showDiffImage:
+            self.createDiffImageWindow()
     
     
     def getMovingObjects(self):
@@ -32,10 +32,15 @@ class MotionTracker(object):
         if self.diffImage == None:
 			return None
 
-        #if self.showDiffImage:
-		#	cv2.imshow('diff image', self.diffImage)
         #threshold = cv2.morphologyEx(self.diffImage, cv2.MORPH_OPEN, self.KERNEL_OPEN)
         #threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
+        
+        # CONVOLUTION
+        #threshold = cv2.morphologyEx(self.diffImage, cv2.MORPH_OPEN, self.KERNEL_OPEN)
+        #disc = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,6))
+        #cv2.filter2D(self.diffImage,-1,disc,threshold)
+        #ret,threshold = cv2.threshold(threshold,10,255,0)
+        
         threshold = cv2.erode(self.diffImage,self.KERNEL_OPEN,iterations = 1)
         threshold = cv2.dilate(threshold,self.KERNEL_OPEN,iterations = 1)
         threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)

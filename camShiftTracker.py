@@ -23,14 +23,15 @@ class CamShiftTracker():
             roi = frame[r:r+h, c:c+w]
             hsv_roi =  cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
             
-            mask2 = cv2.inRange(hsv_roi, np.array((0., 30.,30.)), np.array((255.,250.,250.)))
+            mask2 = cv2.inRange(hsv_roi, np.array((0., 30.,30.)), np.array((180.,250.,250.)))
             mask = np.zeros((height,width), np.uint8)
             cv2.drawContours(mask, [contour], 0, 255, -1)
             maskArea = mask[r:r+h,c:c+w]
             maskArea = cv2.bitwise_and(maskArea, mask2)
             img = cv2.bitwise_and(roi,roi,mask=maskArea)
             #cv2.imshow('maskarea', mask2)
-            roi_hist = cv2.calcHist([hsv_roi],[0],maskArea,[256],[0,256])
+            roi_hist = cv2.calcHist([hsv_roi],[0,1],maskArea,[180,256],[0,180,0,256])
+            #roi_hist = cv2.calcHist([hsv_roi],[0],maskArea,[180],[0,180])
             cv2.normalize(roi_hist,roi_hist,0,255,cv2.NORM_MINMAX)
             #print i
             i+=1
@@ -58,7 +59,8 @@ class CamShiftTracker():
             
         
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            dst = cv2.calcBackProject([hsv],[0],roi_hist,[0,256],1)
+            #dst = cv2.calcBackProject([hsv],[0],roi_hist,[0,256],1)
+            dst = cv2.calcBackProject([hsv],[0,1],roi_hist,[0,180,0,256],1)
 
             #ret, self.movingObjects[i] = cv2.meanShift(dst, track_window, self.term_crit)
             # apply meanshift to get the new location

@@ -13,25 +13,41 @@ import camShiftTracker as cst
 import arduinocomm as ac
 
 motionTracker = None
-
-show2DPositions = False
+show2DPositions = True
 showBackground = False
 showTracker = False
 showDiff = False
+showMain = False
+controlArduino = False
+camShift = False
+colorSearch = False
+ballSearch = False
 
+
+def init():
+    global controlArduino, colorSearch
+    if controlArduino:
+        ac.init()
+    if colorSearch:
+        objr.createJerseyWindow()
+        
 def createTrackbars():
-    global show2DPositions, showBackground, showTracker, showDiff
+    global showMain, show2DPositions, showBackground, showTracker, showDiff
+    if not showMain:
+        return
     cv2.namedWindow('video player')
     cv2.createTrackbar('show 2D positions', 'video player',show2DPositions, 1, np.uint)
     cv2.createTrackbar('show background', 'video player', showBackground, 1, np.uint)
     cv2.createTrackbar('show tracker', 'video player', showTracker, 1, np.uint)
     cv2.createTrackbar('show diff image', 'video player', showDiff, 1, np.uint)
-    objr.createJerseyWindow()
     
 def checkSettings():
     
-    global motionTracker
+    global showMain, motionTracker
     
+    if not showMain:
+        return
+        
     if motionTracker == None:
 		return
     
@@ -64,7 +80,8 @@ def checkSettings():
 
 def main(argv):
     global motionTracker
-    global showTracker
+    global showTracker, showMain, showBackground, showTracker
+    global controlArduino, camShift, colorSearch, ballSearch
     
     capture = None
     inputFile = None
@@ -73,67 +90,72 @@ def main(argv):
         inputFile = sys.argv[1]
         print "Opening file: {}".format(inputFile)
         capture=cv2.VideoCapture(inputFile)
-        player = vp.VideoPlayer(capture)
+        player = vp.VideoPlayer(capture, show=showMain)
     else :
         print "Opening camera."
         capture=cv2.VideoCapture(0)
 
 
     createTrackbars()
-    i=0
-    camShiftTracker = cst.CamShiftTracker()
+    if camShift:
+        i=0
+        camShiftTracker = cst.CamShiftTracker()
+        
     if capture.isOpened :
-        motionTracker = mt.MotionTrackerBACK(capture, './sample/calibration/calibration.npz')
+        motionTracker = mt.MotionTrackerBACK(capture, './sample/calibration/calibration.npz', showTrackerImage= showTracker, showBackImage = showBackground)
 
         while capture.isOpened :
             checkSettings()
-            #print capture.get(cv2.cv.CV_CAP_PROP_)
+            
             f,frame = capture.read()
-            #hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            #h,s,v = cv2.split(hsv)
-            #cv2.imshow("h",h)
-            #cv2.imshow("s",s)
-            #cv2.imshow("v",v)
+            
             frameGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             motionTracker.update(frameGray)
             
-            #mo = motionTracker.getMovingObjects()
-            #motionTracker.getObjectPositions()
+            mo = motionTracker.getMovingObjects()
+            motionTracker.getObjectPositions()
+            
+            frameGray = motionTracker.drawContours()
             
             
-            #frameGray = motionTracker.drawContours()
             
-            #cv2.circle(frameGray, (biggestObjPos), 10, 255,-1)
-            #cv2.imshow('framegray', frameGray)
-            biggestObjPos = motionTracker.getBiggestMovingObject()
-            height, width = frameGray.shape
-            if not biggestObjPos == None:
-                x = int(biggestObjPos[0] *100 / float(width))
-                y = int(biggestObjPos[1] *100 / float(height))
-                ac.lookAt((x,y))
+            if controlArduino:
+                biggestObjPos = motionTracker.getBiggestMovingObject()
+                height, width = frameGray.shape
+                if not biggestObjPos == None:
+                    x = int(biggestObjPos[0] *100 / float(width))
+                    y = int(biggestObjPos[1] *100 / float(height))
+                    ac.lookAt((x,y))
+                #cv2.circle(frameGray, (biggestObjPos), 10, 255,-1)
+                #cv2.imshow('framegray', frameGray)
 
-            """ddi = motionTracker.getDilatedDiffImage(frame)
-            if i%90 == 0:
-                camShiftTracker.updateContours(ddi, mo)
-                
-            camShiftTracker.track(ddi)
-            i+=1
+            if camShift:
+                ddi = motionTracker.getDilatedDiffImage(frame)
+                if i%90 == 0:
+                    camShiftTracker.updateContours(ddi, mo)
+                    
+                camShiftTracker.track(ddi)
+                i+=1
 
-            objr.playersWithGreenJersey(frame, mo)  
-            """
+            if colorSearch:
+                objr.playersWithGreenJersey(frame, mo)  
             
-            #ballContour = bo.getBall(frame, motionTracker.diffImage) #brightest object should be a BALL
-            #if not ballContour == None:
-            #    x,y,w,h = cv2.boundingRect(ballContour)
-            #    cv2.rectangle(frameGray, (x,y), (x+w,y+h), (255,255,255))
+            if ballSearch:
+                ballContour = bo.getBall(frame, motionTracker.diffImage) #brightest object should be a BALL
+                if not ballContour == None:
+                    x,y,w,h = cv2.boundingRect(ballContour)
+                    cv2.rectangle(frameGray, (x,y), (x+w,y+h), (255,255,255))
            
             if not player == None :
                 player.loop()
             else :
-                if(cv2.waitKey(27)!=-1):
-                    capture.release()
-                    cv2.destroyAllWindows()
-                    break
+                if showMain:
+                    cv2.imshow('video player', frame)
+                    if(cv2.waitKey(27)!=-1):
+                        capture.release()
+                        cv2.destroyAllWindows()
+                        break
 
 if __name__ == "__main__":
+    init()
     sys.exit(main(sys.argv[1:]))

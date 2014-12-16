@@ -8,12 +8,12 @@ import backgroundExtractor2 as be
 
 class MotionTrackerBACK(mt.MotionTracker):
     
-    def __init__(self, capture, calibrationFile=None, blur=2, perfection=100, backImage = None):
+    def __init__(self, capture, calibrationFile=None, blur=2, perfection=100, showTrackerImage=False, backImage = None, showBackImage = False):
         
-        super(self.__class__, self).__init__(capture, calibrationFile = calibrationFile, blur=blur)
+        super(self.__class__, self).__init__(capture, calibrationFile=calibrationFile, showTrackerImage=showTrackerImage, blur=blur)
         
         self.perfection = perfection
-        self.backExtr = be.BackgroundExtractor(self.perfection)
+        self.backExtr = be.BackgroundExtractor(self.perfection, showBackImage)
         
         if not backImage == None :
             self.backImage = backImage
