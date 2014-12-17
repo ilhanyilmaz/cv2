@@ -10,7 +10,8 @@ class MotionTracker(object):
         self.KERNEL_OPEN = np.ones((1,1),np.uint8)
         self.KERNEL_CLOSE = np.ones((12,5),np.uint8)
         self.blurValue = blur
-        self.THRESHOLD = 22
+        self.THRESHOLD = 40
+        self.THRESHOLD2 = 17
         self.contours = None
         self.frame = None
         self.capture = capture
@@ -22,35 +23,123 @@ class MotionTracker(object):
             self.estimator = le.LocationEstimator(calibrationFile)
         if self.showDiffImage:
             self.createDiffImageWindow()
+        self.rectangles = None
+    #return a dict of row: index with value in row > 0 
+    """def first_true1(a):
     
+        di={}
+        for i in range(len(a)):
+            idx=np.where(a[i]>0)
+            try:
+                di[i]=idx[0][0]
+            except IndexError:
+                di[i]=None    
+    return di 
     
+    def subThreshold(threshold):
+        h,w = threshold.shape
+        for i in range(w):
+            l = i
+            r = w-i
+            if threshold(:)
+    """
+    def findNonZeroBoundary(self,roi,x,y):
+        h,w = roi.shape
+        #print roi
+        lFound = False
+        rFound = False
+        l=0
+        r=w-1
+        for i in range(w):
+            if not lFound:
+                l = i
+            if not rFound:
+                r = w-i-1
+            if np.sum(roi[:,l]) > 0:
+                lFound = True
+            if np.sum(roi[:,r]) > 0:
+                rFound = True
+            if lFound and rFound:
+                break
+                
+        uFound = False
+        bFound = False
+        u=0
+        b=h-1
+        for i in range(h):
+            if not uFound:
+                u = i
+            if not bFound:
+                b = h-i-1
+            if np.sum(roi[u,:]) > 0:
+                uFound = True
+            if np.sum(roi[b,:]) > 0:
+                bFound = True
+            if uFound and bFound:
+                break
+        
+        #if l!=0 or r!=w or u!=w or b!=h:
+        #    print "{0}-{1}:{2}-{3}".format(l,r,u,b)
+        
+        return [l+x,u+y,r+x,b+y]
+        
     def getMovingObjects(self):
         
-        #kernel = np.ones((8,8),np.uint8)
-        #threshold = cv2.erode(threshold,kernel,iterations = 1)
-        #threshold = cv2.dilate(threshold,kernel,iterations = 1)
         if self.diffImage == None:
 			return None
 
+        ref, tDiffImage = cv2.threshold(self.diffImage, self.THRESHOLD, 128, cv2.THRESH_BINARY)
+        ref, tDiffImage2 = cv2.threshold(self.diffImage, self.THRESHOLD2, 127, cv2.THRESH_BINARY)
+        threshold = tDiffImage + tDiffImage2
+        
+        
+            
         #threshold = cv2.morphologyEx(self.diffImage, cv2.MORPH_OPEN, self.KERNEL_OPEN)
         #threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
         
-        # CONVOLUTION
-        #threshold = cv2.morphologyEx(self.diffImage, cv2.MORPH_OPEN, self.KERNEL_OPEN)
-        #disc = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,6))
-        #cv2.filter2D(self.diffImage,-1,disc,threshold)
-        #ret,threshold = cv2.threshold(threshold,10,255,0)
         
-        threshold = cv2.erode(self.diffImage,self.KERNEL_OPEN,iterations = 1)
+        #threshold = cv2.morphologyEx(self.diffImage, cv2.MORPH_OPEN, self.KERNEL_OPEN)
+        threshold = cv2.erode(threshold,self.KERNEL_OPEN,iterations = 1)
         threshold = cv2.dilate(threshold,self.KERNEL_OPEN,iterations = 1)
-        threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
         
         if self.showDiffImage:
-			cv2.imshow('diff image', self.getDilatedDiffImage(self.frame))
-			
-        self.contours, hierachy = cv2.findContours(threshold, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-        return self.contours
+			cv2.imshow('diff image', threshold)
+            
+        # CONVOLUTION
+        #disc = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,6))
+        #cv2.filter2D(tDiffImage,-1,disc,threshold)
+        #ret,threshold = cv2.threshold(threshold,10,255,0)
+        threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, self.KERNEL_CLOSE)
         
+        
+        
+        
+			
+        # libopencv 2.4.9
+        #self.contours, hierachy = cv2.findContours(threshold, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        #return self.contours
+        # libopencv 2.4.9
+        image, self.contours, hierachy = cv2.findContours(threshold, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        
+        self.rectangles = []
+        for contour in self.contours:
+            area = cv2.contourArea(contour)
+            if area < 10:
+                continue
+            
+            
+            x,y,w,h = cv2.boundingRect(contour)
+            rect= cv2.boundingRect(contour)
+            conDiffImg = tDiffImage[rect[1]:rect[1]+rect[3],rect[0]:rect[0]+rect[2]]
+            self.rectangles.append(self.findNonZeroBoundary(conDiffImg,x,y))
+            
+            """if cv2.isContourConvex(contour):
+                if len(contour) > 5:
+                    (x,y),(MA,ma),angle = cv2.fitEllipse(contour)
+                    print "{0}-{1}".format(MA,ma)
+            """
+        return self.contours
+
     def update(self, frame):
 		
         self.frame = frame.copy()
@@ -103,7 +192,16 @@ class MotionTracker(object):
         if not biggestContour == None:
             x,y,w,h = cv2.boundingRect(biggestContour)
             return (x+w/2, y+h/2)
-            
+    
+    def drawRectangles(self):
+        if self.rectangles == None:
+            return self.frame
+        for rect in self.rectangles:
+            cv2.rectangle(self.frame, (rect[0],rect[1]), (rect[2],rect[3]), (0,255,0))
+        if self.showTracker:
+			cv2.imshow('tracker', self.frame)
+        return self.frame
+                
     def drawContours(self):
         if self.contours == None:
             return self.frame
@@ -125,6 +223,8 @@ class MotionTracker(object):
             self.blurValue = value
         elif parameter == 'threshold':
             self.THRESHOLD = value
+        elif parameter == 'threshold2':
+            self.THRESHOLD2 = value
         elif parameter == 'm_open':
             self.KERNEL_OPEN = np.ones((value,value),np.uint8)
             #print self.KERNEL_OPEN
@@ -147,6 +247,7 @@ class MotionTracker(object):
         cv2.createTrackbar('m_close_x','diff image',i, 20, np.uint)
         cv2.createTrackbar('m_close_y','diff image',j, 20, np.uint)
         cv2.createTrackbar('threshold','diff image',self.THRESHOLD, 100, np.uint)
+        cv2.createTrackbar('threshold2','diff image',self.THRESHOLD2, 100, np.uint)
 
     def diffImageWindowSettings(self):
 		
@@ -163,6 +264,10 @@ class MotionTracker(object):
         if value != self.THRESHOLD :
             self.setParameter('threshold', value)
 
+        value = cv2.getTrackbarPos('threshold2','diff image')
+        if value != self.THRESHOLD2 :
+            self.setParameter('threshold2', value)
+            
         j,i=self.KERNEL_OPEN.shape
         value = cv2.getTrackbarPos('m_open','diff image')
         if value == 0:

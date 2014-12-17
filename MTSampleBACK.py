@@ -13,11 +13,11 @@ import camShiftTracker as cst
 import arduinocomm as ac
 
 motionTracker = None
-show2DPositions = True
+show2DPositions = False
 showBackground = False
 showTracker = False
 showDiff = False
-showMain = False
+showMain = True
 controlArduino = False
 camShift = False
 colorSearch = False
@@ -115,7 +115,7 @@ def main(argv):
             mo = motionTracker.getMovingObjects()
             motionTracker.getObjectPositions()
             
-            frameGray = motionTracker.drawContours()
+            frameGray = motionTracker.drawRectangles()
             
             
             

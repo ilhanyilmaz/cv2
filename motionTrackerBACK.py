@@ -26,7 +26,7 @@ class MotionTrackerBACK(mt.MotionTracker):
 		
         self.backImage = self.backExtr.feed(self.frame)
         self.diffImage = cv2.absdiff(self.backImage,self.frame)
-        ref, self.diffImage = cv2.threshold(self.diffImage, self.THRESHOLD, 255, cv2.THRESH_BINARY)
+        #ref, self.diffImage = cv2.threshold(self.diffImage, self.THRESHOLD, 255, cv2.THRESH_BINARY) # HANDLED IN MOTIONTRACKER.PY
         #ret, threshold = cv2.threshold(diffImage, 0, 255, cv2.THRESH_BINARY|cv2.THRESH_OTSU)
         
     def updateBackgroundImage(self, capture, perfection, frameCountLimit):
