@@ -14,7 +14,7 @@
 
 import numpy as np
 import cv2
-import cv2.cv as cv
+#import cv2.cv as cv
 import sys, getopt
 
 inputfile = ''
@@ -39,10 +39,12 @@ def editVideo():
     global fps
     global changeSize
 
-    cap.set(cv.CV_CAP_PROP_POS_FRAMES, startAt)
+    #cap.set(cv.CV_CAP_PROP_POS_FRAMES, startAt)
+    cap.set(cv2.CAP_PROP_POS_FRAMES, startAt)
     frameInRange = endAt - startAt
     #fourcc = cap.get(cv.CV_CAP_PROP_FOURCC)
-    fourcc = cv.CV_FOURCC('X','V','I','D')
+    #fourcc = cv.CV_FOURCC('X','V','I','D')
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
 
     videoWriter = cv2.VideoWriter(outputfile, int(fourcc), fps, (targetWidth,targetHeight))
 
@@ -61,6 +63,7 @@ def editVideo():
             break
 
     cap.release()
+    videoWriter.release()
     cv2.destroyAllWindows()
     print "\nEditing completed. File saved at {}.".format(outputfile)
 
@@ -108,10 +111,14 @@ def main(argv):
 
 
     cap = cv2.VideoCapture(inputfile)
-    orgHeight = int(cap.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
-    orgWidth = int(cap.get(cv.CV_CAP_PROP_FRAME_WIDTH))
-    fps = cap.get(cv.CV_CAP_PROP_FPS)
-    totalFrames = int(cap.get(cv.CV_CAP_PROP_FRAME_COUNT))
+    orgHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    orgWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    #orgHeight = int(cap.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
+    #orgWidth = int(cap.get(cv.CV_CAP_PROP_FRAME_WIDTH))
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    #fps = cap.get(cv.CV_CAP_PROP_FPS)
+    #totalFrames = int(cap.get(cv.CV_CAP_PROP_FRAME_COUNT))
+    totalFrames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     anyChange = False
     if not startAt == 0:

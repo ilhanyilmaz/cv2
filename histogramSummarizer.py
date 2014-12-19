@@ -48,13 +48,14 @@ def summarizeHistogram(crop, image):
     mask = cv2.inRange(hsv, np.array((0., 15.,15.)), np.array((180.,256.,256.)))
     #roiHist = cv2.calcHist([hsv], [0], None, [180], [0, 180])
     roiHist = cv2.calcHist([hsv], [0,1], mask, [180, 256], [0, 180, 0, 256])
+    #roiHist = cv2.calcHist([hsv], [0,1], None, [180, 256], [0, 180, 0, 256])
 
     cv2.normalize(roiHist, roiHist,0,255,cv2.NORM_MINMAX)
     #dst = cv2.calcBackProject([hsvt],[0],roiHist,[0,180],1)
     dst = cv2.calcBackProject([hsvt],[0,1],roiHist,[0,180,0,256],1)
     cv2.imshow('dst', dst)
     disc = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(discValue,discValue))
-    #cv2.filter2D(dst, -1,disc,dst)
+    cv2.filter2D(dst, -1,disc,dst)
     ret,thresh = cv2.threshold(dst,threshold,255,cv2.THRESH_BINARY)
     thresh = cv2.merge((thresh,thresh,thresh))
     res = cv2.bitwise_and(image,thresh)
@@ -101,7 +102,7 @@ def main(argv):
         image = cv2.imread(argv[0])
     createTrackbars()
     cv2.imshow("image", image)
-    cv2.cv.SetMouseCallback('image', mouseEvent, 0)
+    cv2.setMouseCallback('image', mouseEvent)
 
     while(cv2.waitKey(90)==-1):
         checkSettings()

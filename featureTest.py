@@ -102,9 +102,12 @@ def match():
 def main(argv):
     global frame1, kp1, des1, frame2, kp2, des2
     #cap = cv2.VideoCapture("./sample/sample2.avi")
-    cap = cv2.VideoCapture(0)
+    if len(argv) > 0:
+        cap = cv2.VideoCapture(argv[0])
+    else:
+        cap = cv2.VideoCapture(0)
     
-    
+        
     if cap.isOpened :
         f,frame1 = cap.read()
         kp1, des1 = metOrb(frame1.copy())
@@ -123,8 +126,8 @@ def main(argv):
             cv2.imshow('image', frame)
             
         key = cv2.waitKey(30)
-        if key == 32: #SPACE
-        #if key == 1048608: #SPACE
+        #if key == 32: #SPACE
+        if key == 1048608: #SPACE
             frame1=frame2.copy()
             kp1, des1 = metOrb(frame1.copy())
         elif key != -1:
