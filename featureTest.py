@@ -9,6 +9,7 @@ des1 = None
 frame2 = None
 kp2 = None
 des2 = None
+frame = None
 
 def metGoodFeatures(frame):
     gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
@@ -47,7 +48,7 @@ def metOrb(frame):
     return kp, des
     
 def match():
-    global frame1, kp1, des1, frame2, kp2, des2
+    global frame1, kp1, des1, frame2, kp2, des2, frame
     # create BFMatcher object
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
@@ -76,11 +77,15 @@ def match():
     
     if len(p1)>4:
         M,mask = cv2.findHomography(p1,p2)
-        pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
-        dst = cv2.perspectiveTransform(pts,M)
+        #pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+        #dst = cv2.perspectiveTransform(pts,M)
+        frame = cv2.warpPerspective(frame1, M, dsize=(w,h))
+        frame = cv2.absdiff(frame,frame2)
+        #frame[0:h,0:w] = frame2
+        
         #frame2 = cv2.polylines(frame2,[np.int32(dst)],True,(0,255,0),3)
     
-    frame = np.hstack((frame1, frame2))
+    #frame = np.hstack((frame1, frame2))
     
     i=0
     for match in matches:
@@ -100,7 +105,7 @@ def match():
     return frame
 
 def main(argv):
-    global frame1, kp1, des1, frame2, kp2, des2
+    global frame1, kp1, des1, frame2, kp2, des2, frame
     #cap = cv2.VideoCapture("./sample/sample2.avi")
     if len(argv) > 0:
         cap = cv2.VideoCapture(argv[0])
@@ -111,6 +116,9 @@ def main(argv):
     if cap.isOpened :
         f,frame1 = cap.read()
         kp1, des1 = metOrb(frame1.copy())
+        h,w,d = frame1.shape
+        #frame = np.zeros(h*w*d).reshape(h,w,d)
+        #frame[h:2*h,w:2*w] = frame1
     
     while cap.isOpened :
         f,frame2 = cap.read()
@@ -126,8 +134,8 @@ def main(argv):
             cv2.imshow('image', frame)
             
         key = cv2.waitKey(30)
-        #if key == 32: #SPACE
-        if key == 1048608: #SPACE
+        if key == 32: #SPACE
+        #if key == 1048608: #SPACE
             frame1=frame2.copy()
             kp1, des1 = metOrb(frame1.copy())
         elif key != -1:
