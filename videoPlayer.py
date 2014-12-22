@@ -25,14 +25,14 @@ class VideoPlayer():
     def loop(self):
         key = -1
         #libopencv2.4.9
-        #currentPos = int(self.capture.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))
+        currentPos = int(self.capture.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))
         #libopencv3.0.0
-        currentPos = int(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
+        #currentPos = int(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
         nextPos = currentPos + self.step
         #libopencv2.4.9
-        #self.capture.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, nextPos)
+        self.capture.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, nextPos)
         #libopencv3.0.0
-        self.capture.set(cv2.CAP_PROP_POS_FRAMES, nextPos)
+        #self.capture.set(cv2.CAP_PROP_POS_FRAMES, nextPos)
         f, self.image = self.capture.read()
         if self.show:
             #ret, image = self.capture.read()

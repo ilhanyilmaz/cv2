@@ -1,6 +1,8 @@
 import locationEstimator as le
+import locationEstimator_old as leo
 
 estimator = le.LocationEstimator('./sample/calibration/calibration.npz')
+#estimator = leo.LocationEstimator('./sample/calibration/calibration.npz')
 
 print "1: {}".format(estimator.get3dCoordinates(270,234))
 print "2: {}".format(estimator.get3dCoordinates(372,150))

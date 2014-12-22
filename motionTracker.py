@@ -153,7 +153,7 @@ class MotionTracker(object):
         #threshold = cv2.dilate(threshold,self.KERNEL_CLOSE,iterations = 1)
         return cv2.bitwise_and(frame, frame, mask = threshold)
 		
-    def getObjectPositions(self):
+    """def getObjectPositions(self):
         if self.contours == None :
             return
         posImage = np.zeros((500,500,3), np.uint8)
@@ -172,7 +172,7 @@ class MotionTracker(object):
             #i+=1
         if self.showPositions:
             cv2.imshow("positions", posImage)
-
+    """
     def getBiggestMovingObject(self):
         if self.contours == None :
             return
@@ -216,6 +216,12 @@ class MotionTracker(object):
         if self.showTracker:
 			cv2.imshow('tracker', self.frame)
         return self.frame
+    
+    def update2dPoints(self):
+        if self.contours == None :
+            return None
+        
+        self.estimator.getContours3dCoordinates(self.contours)
         
     def setParameter(self, parameter, value, value2=None):
         
@@ -233,6 +239,8 @@ class MotionTracker(object):
             #print self.KERNEL_CLOSE
         elif parameter == 'show_positions':
             self.showPositions = value
+            self.estimator.showPositions = value
+            self.estimator.initWindow()
         elif parameter == 'show_diff_image':
             self.showDiffImage = value
         elif parameter == 'show_tracker':
@@ -288,5 +296,6 @@ class MotionTracker(object):
     
         if self.showDiffImage :
             self.diffImageWindowSettings()
-            
+    
+    
             

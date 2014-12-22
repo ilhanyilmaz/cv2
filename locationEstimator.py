@@ -3,33 +3,47 @@ import math
 import cv2
 
 class LocationEstimator():
-    def __init__(self, calibrationfile):
+    def __init__(self, calibrationfile, showPositions=False):
         self.calibration = np.load(calibrationfile)
-        #print 'Mtx:'
-        #print self.calibration['mtx']
-        #print 'rvecs:'
-        #print self.calibration['rvecs']
-        #print 'tvecs:'
-        #print self.calibration['tvecs']
-        rVecs = self.calibration['rvecs'][0]
-        mtx, jacobian = cv2.Rodrigues(rVecs)
-        tVecs = self.calibration['tvecs'][0]
-        mtx = np.concatenate((mtx, tVecs), axis=1)
-        #print "mtx:\n{}".format(self.calibration['mtx'])
-        self.mtx = np.dot(self.calibration['mtx'], mtx)
-
+        self.showPositions = showPositions
+        
+        self.calcMatrix()
         self.scaleFactor = 1
         self.offsetX = 0.
         self.offsetY = 0.
+        self.objPositions = []
 
         self.defineRange(640,480,500)
+        
+        if showPositions:
+            self.initWindow()
+        
 
-        #print self.mtx
+    def calcMatrix(self):
+        rVecs = self.calibration['rvecs'][0]
+        mtx, jacobian = cv2.Rodrigues(rVecs)
+        #print 'rVecs:'
+        #print rVecs
+        tVecs = self.calibration['tvecs'][0]
+        mtx = np.concatenate((mtx, tVecs), axis=1)
+        #print 'tVecs:'
+        #print tVecs
+        #print "mtx:\n{}".format(self.calibration['mtx'])
+        self.mtx = np.dot(self.calibration['mtx'], mtx)
         #print "tvecs: {}".format(tVecs)
         #print "rvecs: {}".format(rVecs)
         #print "newMtx:\n{}".format(self.calibration['newMtx'])
         #print "result:\n{}".format(mtx)
-
+        #print "new matrix:"
+        #print self.mtx
+        
+    def initWindow(self):
+        cv2.namedWindow('positions')
+        print self.calibration['rvecs'][0][0]
+        cv2.createTrackbar('rvec0','positions',int(self.calibration['rvecs'][0][0]*100), 314, np.uint8)
+        cv2.createTrackbar('rvec1','positions',self.calibration['rvecs'][0][1], 314, np.uint8)
+        cv2.createTrackbar('rvec2','positions',self.calibration['rvecs'][0][2], 314, np.uint8)
+        
     def defineRange(self,w,h,range):
         imageCorners = np.array([[0,0],[w,0],[0,h],[w,h]])
         minX=999999
@@ -62,3 +76,28 @@ class LocationEstimator():
         xyres[0] = (xyres[0]-self.offsetX) * self.scaleFactor
         xyres[1] = (xyres[1]-self.offsetY) * self.scaleFactor
         return xyres
+        
+    def getContours3dCoordinates(self, contours):
+        if contours == None :
+            return None
+        
+        self.objPositions = []
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            #print area
+            if area < 10:
+                continue
+            x,y,w,h = cv2.boundingRect(contour)
+            objPos = self.get3dCoordinates(x+w/2, y+h)
+            self.objPositions.append(objPos)
+        
+        if self.showPositions:
+            self.updateImage()
+            
+    def updateImage(self):
+        posImage = np.zeros((500,500,3), np.uint8)
+        
+        for objPos in self.objPositions:
+            cv2.circle(posImage, (int(objPos[0]),int(objPos[1])), 10, (0,255,0),-1)
+        
+        cv2.imshow("positions", posImage)

@@ -9,6 +9,7 @@ import videoPlayer as vp
 import brightestobject as bo
 import objectRecognizer as objr
 import camShiftTracker as cst
+import locationEstimator as le
 
 import arduinocomm as ac
 
@@ -81,7 +82,7 @@ def checkSettings():
 def main(argv):
     global motionTracker
     global showTracker, showMain, showBackground, showTracker
-    global controlArduino, camShift, colorSearch, ballSearch
+    global controlArduino, camShift, colorSearch, ballSearch, show2DPositions
     
     capture = None
     inputFile = None
@@ -102,7 +103,7 @@ def main(argv):
         camShiftTracker = cst.CamShiftTracker()
         
     if capture.isOpened :
-        motionTracker = mt.MotionTrackerBACK(capture, './sample/calibration/calibration.npz', showTrackerImage= showTracker, showBackImage = showBackground)
+        motionTracker = mt.MotionTrackerBACK(capture, calibrationFile='./sample/calibration/calibration.npz', showTrackerImage= showTracker, showBackImage = showBackground)
 
         while capture.isOpened :
             checkSettings()
@@ -113,11 +114,10 @@ def main(argv):
             motionTracker.update(frameGray)
             
             mo = motionTracker.getMovingObjects()
-            motionTracker.getObjectPositions()
-            
             frameGray = motionTracker.drawRectangles()
             
-            
+            if motionTracker.showPositions:
+                motionTracker.update2dPoints()
             
             if controlArduino:
                 biggestObjPos = motionTracker.getBiggestMovingObject()
