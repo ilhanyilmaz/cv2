@@ -15,8 +15,8 @@ class LocationEstimator():
         print self.tvecs
         print self.calibration['mtx']
         
-        self.rvecs = np.array([[[1.418],[0],[0]]], np.float32)
-        self.tvecs = np.array([[[0],[0],[3.3]]], np.float32)
+        self.rvecs = np.array([[[0],[0],[0]]], np.float32)
+        self.tvecs = np.array([[[0],[200],[1000]]], np.float32)
         #self.mtx = np.array(self.calibration['mtx'])
         
         self.showPositions = showPositions
@@ -72,9 +72,9 @@ class LocationEstimator():
         cv2.createTrackbar('rvec0','positions',self.radianToCelcius(self.rvecs[0][0]), 360, np.uint8)
         cv2.createTrackbar('rvec1','positions',self.radianToCelcius(self.rvecs[0][1]), 360, np.uint8)
         cv2.createTrackbar('rvec2','positions',self.radianToCelcius(self.rvecs[0][2]), 360, np.uint8)
-        cv2.createTrackbar('tvec0','positions',int(250+self.tvecs[0][0]*10), 500, np.int8)
-        cv2.createTrackbar('tvec1','positions',int(250+self.tvecs[0][1]*10), 500, np.int8)
-        cv2.createTrackbar('tvec2','positions',int(250+self.tvecs[0][2]*10), 500, np.int8)
+        cv2.createTrackbar('tvec0','positions',int(self.tvecs[0][0]), 2000, np.int8)
+        cv2.createTrackbar('tvec1','positions',int(self.tvecs[0][1]), 2000, np.int8)
+        cv2.createTrackbar('tvec2','positions',int(self.tvecs[0][2]), 2000, np.int8)
         
         
     def checkSettings(self):
@@ -97,15 +97,15 @@ class LocationEstimator():
             change = True
             self.rvecs[0][2] = value
         
-        value = (cv2.getTrackbarPos('tvec0','positions')-250)/10
+        value = (cv2.getTrackbarPos('tvec0','positions'))
         if value != self.tvecs[0][0]:
             change = True
             self.tvecs[0][0] = value
-        value = (cv2.getTrackbarPos('tvec1','positions')-250)/10
+        value = (cv2.getTrackbarPos('tvec1','positions'))
         if value != self.tvecs[0][1]:
             change = True
             self.tvecs[0][1] = value
-        value = (cv2.getTrackbarPos('tvec2','positions')-250)/10
+        value = (cv2.getTrackbarPos('tvec2','positions'))
         if value != self.tvecs[0][2]:
             change = True
             self.tvecs[0][2] = value
@@ -147,8 +147,10 @@ class LocationEstimator():
     def get3dCoordinates(self, u, v):
         #u=u-320
         #v=v-240
+        print "mtx: \n{}".format(self.mtx)
         eq = np.array([[self.mtx[0,0], self.mtx[0,1]],[self.mtx[1,0],self.mtx[1,1]]])
         #eq = np.array([[self.mtx[0,0], self.mtx[0,2]],[self.mtx[1,0],self.mtx[1,2]]])
+        print "uv: \n{}:{}".format(u,v)
         re = np.array([u-self.mtx[0,3], v-self.mtx[1,3]])
         xyres= np.linalg.solve(eq,re)
         xyres[0] = xyres[0] * self.scaleFactor + self.offsetX
@@ -172,7 +174,7 @@ class LocationEstimator():
         
         if self.showPositions:
             self.updateImage()
-            
+    
     def updateImage(self):
         self.checkSettings()
         posImage = np.zeros((500,500,3), np.uint8)
@@ -183,3 +185,36 @@ class LocationEstimator():
                 cv2.circle(posImage, (int(objPos[0]),int(objPos[1])), 10, (0,255,0),-1)
         
         cv2.imshow("positions", posImage)
+
+    def get2dCoordinates(self, point3d):
+        #u=u-320
+        #v=v-240
+        #print self.mtx
+        #print point3d
+        uvPoint = np.dot(self.mtx, point3d)
+        return (int(uvPoint[0][0]/uvPoint[2][0]),int(uvPoint[1][0]/uvPoint[2][0]))
+    
+    def draw3dAxis(self, image):
+        
+        pCenter = np.array([[0],[0],[0],[1]],np.float32)
+        pX = np.array([[10],[0],[0],[1]],np.float32)
+        pY = np.array([[0],[10],[0],[1]],np.float32)
+        pZ = np.array([[0],[0],[10],[1]],np.float32)
+        
+        pCuv = self.get2dCoordinates(pCenter)
+        pXuv = self.get2dCoordinates(pX)
+        pYuv = self.get2dCoordinates(pY)
+        pZuv = self.get2dCoordinates(pZ)
+        
+        print pCuv
+        print self.get3dCoordinates(pCuv[0], pCuv[1])
+        #print pXuv
+        #print pYuv
+        #print pZuv
+        
+        
+        cv2.line(image, pCuv, pXuv, (0,0,255), 3)
+        cv2.line(image, pCuv, pYuv, (0,255,0), 3)
+        cv2.line(image, pCuv, pZuv, (255,0,0), 3)
+        
+        return image
