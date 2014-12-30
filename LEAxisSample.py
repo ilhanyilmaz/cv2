@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import locationEstimator as le
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture('./sample/sample2.avi')
 estimator = le.LocationEstimator('./sample/calibration/calibration.npz', showPositions=True)
 
 while cap.isOpened:

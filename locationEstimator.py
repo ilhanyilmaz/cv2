@@ -15,8 +15,9 @@ class LocationEstimator():
         print self.tvecs
         print self.calibration['mtx']
         
-        self.rvecs = np.array([[[0],[0],[0]]], np.float32)
-        self.tvecs = np.array([[[0],[200],[1000]]], np.float32)
+        self.rvecs = np.array([[[self.celciusToRadian(281)],[self.celciusToRadian(191)],[self.celciusToRadian(96)]]], np.float32)
+        self.tvecs = np.array([[[3977],[1958],[-9659]]], np.float32)
+        #self.tvecs = np.array([[[-10000],[2000],[10000]]], np.float32)
         self.mtx = np.array(self.calibration['mtx'])
         self.mtx[0,2]=320
         self.mtx[1,2]=240
@@ -75,9 +76,9 @@ class LocationEstimator():
         cv2.createTrackbar('rvec0','positions',self.radianToCelcius(self.rvecs[0][0]), 360, np.uint8)
         cv2.createTrackbar('rvec1','positions',self.radianToCelcius(self.rvecs[0][1]), 360, np.uint8)
         cv2.createTrackbar('rvec2','positions',self.radianToCelcius(self.rvecs[0][2]), 360, np.uint8)
-        cv2.createTrackbar('tvec0','positions',int(self.tvecs[0][0]), 2000, np.int8)
-        cv2.createTrackbar('tvec1','positions',int(self.tvecs[0][1]), 2000, np.int8)
-        cv2.createTrackbar('tvec2','positions',int(self.tvecs[0][2]), 2000, np.int8)
+        cv2.createTrackbar('tvec0','positions',int(self.tvecs[0][0]+25000), 50000, np.int8)
+        cv2.createTrackbar('tvec1','positions',int(self.tvecs[0][1]), 4000, np.int8)
+        cv2.createTrackbar('tvec2','positions',int(self.tvecs[0][2]+25000), 50000, np.int8)
         
         
     def checkSettings(self):
@@ -100,7 +101,7 @@ class LocationEstimator():
             change = True
             self.rvecs[0][2] = value
         
-        value = (cv2.getTrackbarPos('tvec0','positions'))
+        value = (cv2.getTrackbarPos('tvec0','positions'))-25000
         if value != self.tvecs[0][0]:
             change = True
             self.tvecs[0][0] = value
@@ -108,7 +109,7 @@ class LocationEstimator():
         if value != self.tvecs[0][1]:
             change = True
             self.tvecs[0][1] = value
-        value = (cv2.getTrackbarPos('tvec2','positions'))
+        value = (cv2.getTrackbarPos('tvec2','positions'))-25000
         if value != self.tvecs[0][2]:
             change = True
             self.tvecs[0][2] = value
@@ -147,7 +148,7 @@ class LocationEstimator():
         #print str(minX) + "-" + str(maxX)
         #print str(minY) + "-" + str(maxY)"""
 
-    def get3dCoordinates2(self, u, v, s):
+    def get3dCoordinates(self, u, v):
         m00 = self.mtx[0,0]
         m01 = self.mtx[0,1]
         m03 = self.mtx[0,3]
@@ -158,29 +159,19 @@ class LocationEstimator():
         m21 = self.mtx[2,1]
         m23 = self.mtx[2,3]
         
+        m00_m20u = m00 - m20*u
+        m01_m21u = m01 - m21*u
+        m10_m20v = m10 - m20*v
+        m11_m21v = m11 - m21*v
+        m23u_m03 = m23*u - m03
+        m23v_m13 = m23*v - m13
         
-        m11m00 = m11*m01
-        m11m01 = m11*m01
-        m11m03 = m11*m01
-        m11su = m11*u
-        m01m10 = m01*m10
-        m01m11 = m01*m11
-        m01m13 = m01*m13
-        m01sv = m01*v
-        
-        
-        #u=u-320
-        #v=v-240
-        print "mtx: \n{}".format(self.mtx)
-        eq = np.array([[self.mtx[0,0], self.mtx[0,1]],[self.mtx[1,0],self.mtx[1,1]]])
-        #eq = np.array([[self.mtx[0,0], self.mtx[0,2]],[self.mtx[1,0],self.mtx[1,2]]])
+        eq = np.array([[m00_m20u, m01_m21u],[m10_m20v,m11_m21v]])
         print "uv: \n{}:{}".format(u,v)
-        re = np.array([u-self.mtx[0,3], v-self.mtx[1,3]])
+        re = np.array([m23u_m03, m23v_m13])
         xyres= np.linalg.solve(eq,re)
-        xyres[0] = xyres[0] * self.scaleFactor + self.offsetX
-        xyres[1] = xyres[1] * self.scaleFactor + self.offsetY
         return xyres
-
+    """
     def get3dCoordinates(self, u, v):
         #u=u-320
         #v=v-240
@@ -194,7 +185,7 @@ class LocationEstimator():
         #xyres[0] = xyres[0] * self.scaleFactor + self.offsetX
         #xyres[1] = xyres[1] * self.scaleFactor + self.offsetY
         return xyres
-        
+    """
     def getContours3dCoordinates(self, contours):
         if contours == None :
             return None
@@ -219,8 +210,8 @@ class LocationEstimator():
         size = 500
         for objPos in self.objPositions:
             print objPos
-            if objPos[0] > 0 and objPos[0]<size and objPos[1] > 0 and objPos[1]<size:
-                cv2.circle(posImage, (int(objPos[0]),int(objPos[1])), 10, (0,255,0),-1)
+            if (objPos[0]/40+250) > 0 and (objPos[0]/40+250)<size and (objPos[1]/40+250) > 0 and (objPos[1]/40+250)<size:
+                cv2.circle(posImage, (int(objPos[0]/40+250),int(250-objPos[1]/40)), 10, (0,255,0),-1)
         
         cv2.imshow("positions", posImage)
 
@@ -237,9 +228,9 @@ class LocationEstimator():
     def draw3dAxis(self, image):
         
         pCenter = np.array([[0],[0],[0],[1]],np.float32)
-        pX = np.array([[100],[0],[0],[1]],np.float32)
-        pY = np.array([[0],[100],[0],[1]],np.float32)
-        pZ = np.array([[0],[0],[100],[1]],np.float32)
+        pX = np.array([[1000],[0],[0],[1]],np.float32)
+        pY = np.array([[0],[1000],[0],[1]],np.float32)
+        pZ = np.array([[0],[0],[1000],[1]],np.float32)
         
         pCuv = self.get2dCoordinates(pCenter)
         pXuv = self.get2dCoordinates(pX)
