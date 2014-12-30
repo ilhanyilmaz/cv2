@@ -17,7 +17,10 @@ class LocationEstimator():
         
         self.rvecs = np.array([[[0],[0],[0]]], np.float32)
         self.tvecs = np.array([[[0],[200],[1000]]], np.float32)
-        #self.mtx = np.array(self.calibration['mtx'])
+        self.mtx = np.array(self.calibration['mtx'])
+        self.mtx[0,2]=320
+        self.mtx[1,2]=240
+        
         
         self.showPositions = showPositions
         
@@ -144,7 +147,28 @@ class LocationEstimator():
         #print str(minX) + "-" + str(maxX)
         #print str(minY) + "-" + str(maxY)"""
 
-    def get3dCoordinates(self, u, v):
+    def get3dCoordinates2(self, u, v, s):
+        m00 = self.mtx[0,0]
+        m01 = self.mtx[0,1]
+        m03 = self.mtx[0,3]
+        m10 = self.mtx[1,0]
+        m11 = self.mtx[1,1]
+        m13 = self.mtx[1,3]
+        m20 = self.mtx[2,0]
+        m21 = self.mtx[2,1]
+        m23 = self.mtx[2,3]
+        
+        
+        m11m00 = m11*m01
+        m11m01 = m11*m01
+        m11m03 = m11*m01
+        m11su = m11*u
+        m01m10 = m01*m10
+        m01m11 = m01*m11
+        m01m13 = m01*m13
+        m01sv = m01*v
+        
+        
         #u=u-320
         #v=v-240
         print "mtx: \n{}".format(self.mtx)
@@ -155,6 +179,20 @@ class LocationEstimator():
         xyres= np.linalg.solve(eq,re)
         xyres[0] = xyres[0] * self.scaleFactor + self.offsetX
         xyres[1] = xyres[1] * self.scaleFactor + self.offsetY
+        return xyres
+
+    def get3dCoordinates(self, u, v):
+        #u=u-320
+        #v=v-240
+        s = self.mtx[2,3]
+        #print "mtx: \n{}".format(self.mtx)
+        eq = np.array([[self.mtx[0,0], self.mtx[0,1]],[self.mtx[1,0],self.mtx[1,1]]])
+        #eq = np.array([[self.mtx[0,0], self.mtx[0,2]],[self.mtx[1,0],self.mtx[1,2]]])
+        #print "uv: \n{}:{}".format(u,v)
+        re = np.array([u*s-self.mtx[0,3], v*s-self.mtx[1,3]])
+        xyres= np.linalg.solve(eq,re)
+        #xyres[0] = xyres[0] * self.scaleFactor + self.offsetX
+        #xyres[1] = xyres[1] * self.scaleFactor + self.offsetY
         return xyres
         
     def getContours3dCoordinates(self, contours):
@@ -192,22 +230,28 @@ class LocationEstimator():
         #print self.mtx
         #print point3d
         uvPoint = np.dot(self.mtx, point3d)
+        #print uvPoint[2][0]
+        #return (int(uvPoint[0][0]),int(uvPoint[1][0]))
         return (int(uvPoint[0][0]/uvPoint[2][0]),int(uvPoint[1][0]/uvPoint[2][0]))
     
     def draw3dAxis(self, image):
         
         pCenter = np.array([[0],[0],[0],[1]],np.float32)
-        pX = np.array([[10],[0],[0],[1]],np.float32)
-        pY = np.array([[0],[10],[0],[1]],np.float32)
-        pZ = np.array([[0],[0],[10],[1]],np.float32)
+        pX = np.array([[100],[0],[0],[1]],np.float32)
+        pY = np.array([[0],[100],[0],[1]],np.float32)
+        pZ = np.array([[0],[0],[100],[1]],np.float32)
         
         pCuv = self.get2dCoordinates(pCenter)
         pXuv = self.get2dCoordinates(pX)
         pYuv = self.get2dCoordinates(pY)
         pZuv = self.get2dCoordinates(pZ)
         
-        print pCuv
-        print self.get3dCoordinates(pCuv[0], pCuv[1])
+        
+        #print 'pX: ' + str(pCuv)
+        print 'C: ' + str(self.get3dCoordinates(pCuv[0], pCuv[1]))
+        print 'X: ' + str(self.get3dCoordinates(pXuv[0], pXuv[1]))
+        print 'Y: ' + str(self.get3dCoordinates(pYuv[0], pYuv[1]))
+        
         #print pXuv
         #print pYuv
         #print pZuv
