@@ -20,7 +20,7 @@ showTracker = False
 showDiff = False
 showMain = True
 controlArduino = False
-camShift = False
+camShift = True
 colorSearch = False
 ballSearch = False
 
@@ -130,12 +130,16 @@ def main(argv):
                 #cv2.imshow('framegray', frameGray)
 
             if camShift:
-                ddi = motionTracker.getDilatedDiffImage(frame)
-                if i%90 == 0:
-                    camShiftTracker.updateContours(ddi, mo)
+                #ddi = motionTracker.getDilatedDiffImage(frame)
+                #if i == 0:
+                    #camShiftTracker.updateRectangles(frame, motionTracker.getMovingRectangles())
+                    #camShiftTracker.updateContours(frame, mo)
+                #    camShiftTracker.updateBiggestObjectContour(frame, motionTracker.getBiggestMovingObject())
+                #if i%90 == 0:
+                #    camShiftTracker.updateContours(ddi, mo)
                     
-                camShiftTracker.track(ddi)
-                i+=1
+                camShiftTracker.trackBiggestObject(frame)
+                #i+=1
 
             if colorSearch:
                 objr.playersWithGreenJersey(frame, mo)  
@@ -151,7 +155,13 @@ def main(argv):
             else :
                 if showMain:
                     cv2.imshow('video player', frame)
-                    if(cv2.waitKey(27)!=-1):
+                    key = cv2.waitKey(27)
+                    if key == 1048608: # space key
+                        #camShiftTracker.updateRectangles(frame, motionTracker.getMovingRectangles())
+                        #camShiftTracker.updateContours(frame, mo)
+                        camShiftTracker.updateBiggestObjectContour(frame, motionTracker.getBiggestMovingObjectContour())
+                    elif(key!=-1):
+                        print key
                         capture.release()
                         cv2.destroyAllWindows()
                         break

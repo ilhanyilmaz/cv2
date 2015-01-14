@@ -173,6 +173,28 @@ class MotionTracker(object):
         if self.showPositions:
             cv2.imshow("positions", posImage)
     """
+    def getBiggestMovingObjectContour(self):
+        if self.contours == None :
+            return None
+        
+        maxArea = 0
+        biggestContour = None
+        i=0
+        pos = 0
+        for contour in self.contours:
+            area = cv2.contourArea(contour)
+            if area > maxArea:
+                maxArea = area
+                biggestContour = contour
+                pos = i
+            i+=1
+
+        if not biggestContour == None:
+            print 'alo'
+            return biggestContour
+        else :
+            return None
+            
     def getBiggestMovingObject(self):
         if self.contours == None :
             return
@@ -192,6 +214,9 @@ class MotionTracker(object):
         if not biggestContour == None:
             x,y,w,h = cv2.boundingRect(biggestContour)
             return (x+w/2, y+h/2)
+            
+    def getMovingRectangles(self):
+        return self.rectangles
     
     def drawRectangles(self):
         if self.rectangles == None:
@@ -201,7 +226,7 @@ class MotionTracker(object):
         if self.showTracker:
 			cv2.imshow('tracker', self.frame)
         return self.frame
-                
+    
     def drawContours(self):
         if self.contours == None:
             return self.frame
