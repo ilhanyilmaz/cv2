@@ -98,14 +98,26 @@ def mouseEvent(event,x,y,flags,param):
 
 def main(argv):
     global image
+    captureNo = 0;
     if len(argv[0]) > 0:
-        image = cv2.imread(argv[0])
+        filename = argv[0]
+        image = cv2.imread(filename)
     createTrackbars()
     cv2.imshow("image", image)
     cv2.setMouseCallback('image', mouseEvent)
 
-    while(cv2.waitKey(90)==-1):
+    while(True):
         checkSettings()
+        key = cv2.waitKey(90)
+        
+        if key == 1048691:
+            captureName = filename + '_' + str(captureNo) + '.jpg'
+            cv2.imwrite(captureName,image[startY:endY, startX:endX])
+            print 'cropped frame saved to: ' + captureName
+            captureNo = captureNo + 1   
+        elif key != -1:
+            print key
+            break
     
     cv2.destroyAllWindows()
     return
