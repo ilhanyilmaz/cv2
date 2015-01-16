@@ -48,7 +48,7 @@ def main(argv):
         camShiftTracker = cst.CamShiftTracker()
         
     if capture.isOpened :
-        motionTracker = mt.MotionTrackerHist(capture, histogramFile='./sample/captures/capture_116.jpg_', showTrackerImage= showTracker)
+        motionTracker = mt.MotionTrackerHist(capture, posHistFile='./sample/captures/bp', showTrackerImage= showTracker)
 
         while capture.isOpened :
             
@@ -57,8 +57,10 @@ def main(argv):
             frameGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             motionTracker.update(frame)
             
-            #mo = motionTracker.getMovingObjects()
-            #frameGray = motionTracker.drawRectangles()
+            mo = motionTracker.getMovingObjects()
+            frameGray = motionTracker.drawRectangles()
+            
+            cv2.imshow('track', frameGray)
             
             if motionTracker.showPositions:
                 motionTracker.update2dPoints()

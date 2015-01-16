@@ -46,25 +46,25 @@ class VideoPlayer():
         else:
             key = cv2.waitKey(0)
         
-        if key == 27: #ESCAPE libopencv2.4.9
-        #if key == 1048603: #ESCAPE libopencv 3.0.0
+        #if key == 27: #ESCAPE libopencv2.4.9
+        if key == 1048603: #ESCAPE libopencv 3.0.0
             self.capture.release()
             cv2.destroyAllWindows()     
-        elif key == 32: # SPACE libopencv 2.4.9
-        #elif key == 1048608: # SPACE libopencv 3.0.0
+        #elif key == 32: # SPACE libopencv 2.4.9
+        elif key == 1048608: # SPACE libopencv 3.0.0
             self.playing = not self.playing
-        elif key == 65361: # LEFT libopencv2.4.9
-        #elif key == 1113937: #LEFT 
+        #elif key == 65361: # LEFT libopencv2.4.9
+        elif key == 1113937: #LEFT 
             self.slower()
             #currentPos = currentPos - 1            
             #currentPos = capture.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, currentPos-1)
-        elif key == 65363: #RIGHT libopencv2.4.9
-        #elif key == 1113939: #RIGHT libopencv3.0.0
+        #elif key == 65363: #RIGHT libopencv2.4.9
+        elif key == 1113939: #RIGHT libopencv3.0.0
             self.faster()
             #currentPos = currentPos + 1            
             #currentPos = capture.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, currentPos+1)
-        elif key == 115: #S libopencv2.4.9
-        #elif key == 1048691: #S libopencv3.0.0
+        #elif key == 115: #S libopencv2.4.9
+        elif key == 1048691: #S libopencv3.0.0
             filename = "{0}capture_{1}.jpg".format(self.saveDirectory, currentPos)
             cv2.imwrite(filename, self.image)
             print "saved frame to: {0}".format(filename)
