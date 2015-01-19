@@ -11,8 +11,9 @@ if len(sys.argv) > 1 and sys.argv[1] == '-hsv':
     showHSV = True
     
 while capture.isOpened :
-    #print capture.get(cv2.cv.CV_CAP_PROP_)
-    f,frame = capture.read()
+    #print capture.get(cv2.cv.CV_CAP_PROP_FPS)
+    capture.grab()
+    f,frame = capture.retrieve()
     if showHSV:
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -25,7 +26,8 @@ while capture.isOpened :
         cv2.imshow('frame', frame)
     key = cv2.waitKey(27)
     
-    if key == 1048691: #S libopencv3.0.0
+    #if key == 1048691: #S libopencv3.0.0
+    if key == 115: #S libopencv3.0.0
         filename = "{0}capture_{1}.jpg".format(saveDirectory, captureNo)
         cv2.imwrite(filename, frame)
         print "saved frame to: {0}".format(filename)
