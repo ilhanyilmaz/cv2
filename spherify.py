@@ -3,6 +3,7 @@ import numpy as np
 import math
 
 imageSize = 360
+maxSize = 1280
 
 def getAngleDist(i,j):
     global imageSize
@@ -38,12 +39,14 @@ def rotateImage(image, angle):
     return dst
     
 def spherify(image):
-    global imageSize
+    global imageSize, maxSize
     
     #image = rotateImage(image, 270)
     height, width, depth = image.shape
     if height / 2 > imageSize:
         imageSize = height / 2
+    if imageSize > maxSize:
+        imageSize = maxSize
     #scaleFactorX = width / imageSize
     #scaleFactorY =  height / imageSize
     #print str(width) + " - " + str(height)
