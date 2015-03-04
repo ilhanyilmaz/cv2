@@ -25,6 +25,7 @@ def getAngleDist(i,j):
 def getUniformCoordinates(angle, dist):
     global imageSize
     v = dist / (imageSize/2)
+    v = v*v
     u = angle / 360.0
     #circleLengthAtDist = 2 * math.pi * dist
     #v = angle * circleLengthAtDist / 360.0
